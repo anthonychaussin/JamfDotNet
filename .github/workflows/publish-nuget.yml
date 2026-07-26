@@ -17,6 +17,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     environment: nuget
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -73,14 +76,14 @@ jobs:
             dotnet pack JamfDotNet.slnx -c Release --no-build -o "${GITHUB_WORKSPACE}/artifacts"
           fi
 
+      - name: NuGet login (Trusted Publishing OIDC)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: AnthonyChaussin
+
       - name: Publish to NuGet.org
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
-          if [ -z "$NUGET_API_KEY" ]; then
-            echo "Missing repository secret NUGET_API_KEY. Add a nuget.org API key under Settings → Secrets → Actions."
-            exit 1
-          fi
           shopt -s nullglob
           packages=(artifacts/*.nupkg)
           if [ ${#packages[@]} -eq 0 ]; then
@@ -90,7 +93,7 @@ jobs:
           for pkg in "${packages[@]}"; do
             echo "Pushing $pkg"
             dotnet nuget push "$pkg" \
-              --api-key "$NUGET_API_KEY" \
+              --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" \
               --source https://api.nuget.org/v3/index.json \
               --skip-duplicate
           done

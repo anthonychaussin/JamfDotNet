@@ -186,16 +186,19 @@ See [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md) for contributo
 
 ## Publishing to NuGet.org
 
-CI publishes packages when:
+Publishing uses [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (GitHub Actions OIDC) — no long-lived NuGet API key secret is required.
+
+Configured on nuget.org for:
+
+- Owner / user: `AnthonyChaussin`
+- Repository: `anthonychaussin/JamfDotNet`
+- Workflow file: `publish-nuget.yml`
+- GitHub Environment: `nuget` (match this in the Trusted Publishing policy if set)
+
+CI publishes when:
 
 1. A GitHub Release is published (tag `v0.1.0` → version `0.1.0`), or
 2. The **Publish NuGet** workflow is run manually (`workflow_dispatch`).
-
-Required repository secret:
-
-- `NUGET_API_KEY` — API key from [nuget.org](https://www.nuget.org/account/apikeys) (push scope for `JamfDotNet.*`)
-
-Optional GitHub Environment named `nuget` can add approval gates before publish.
 
 ## License
 
