@@ -18,4 +18,4 @@ var inventory = await jamf.Api.V1.ComputersInventory.GetAsync();
 
 Targets `net8.0` and `net10.0` in one NuGet package.
 
-See the [repository README](https://github.com/loky974587/JamfDotNet) for schema fetch/regen scripts.
+See the [repository README](https://github.com/anthonychaussin/JamfDotNet) for schema fetch/regen scripts.

@@ -20,4 +20,4 @@ var list = await titles.Api.Softwaretitles.GetAsync();
 
 Prefer regenerating from an instance schema when `JAMF_TITLE_EDITOR_URL` is available.
 
-See the [repository README](https://github.com/loky974587/JamfDotNet).
+See the [repository README](https://github.com/anthonychaussin/JamfDotNet).

@@ -19,4 +19,4 @@ var roles = await protect.ListRolesAsync();
 using var raw = await protect.ExecuteAsync(query, variables);
 ```
 
-See the [repository README](https://github.com/loky974587/JamfDotNet) and vendored schema `graphql/jamf-protect.schema.graphql`.
+See the [repository README](https://github.com/anthonychaussin/JamfDotNet) and vendored schema `graphql/jamf-protect.schema.graphql`.

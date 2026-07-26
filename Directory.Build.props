@@ -10,8 +10,8 @@
     <Product>JamfDotNet</Product>
     <Copyright>Copyright (c) Anthony Chaussin</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/loky974587/JamfDotNet</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/loky974587/JamfDotNet</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/anthonychaussin/JamfDotNet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/anthonychaussin/JamfDotNet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>

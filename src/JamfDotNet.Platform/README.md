@@ -19,4 +19,4 @@ var platform = provider.GetRequiredService<JamfPlatformClient>();
 
 This package does **not** replace `JamfDotNet.Pro` / `JamfDotNet.Classic`.
 
-See the [repository README](https://github.com/loky974587/JamfDotNet).
+See the [repository README](https://github.com/anthonychaussin/JamfDotNet).

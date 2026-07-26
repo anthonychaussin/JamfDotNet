@@ -18,4 +18,4 @@ var buildings = await classic.Api.Buildings.GetAsync();
 
 Classic writes often require XML bodies. Prefer Jamf Pro API for new work when an equivalent exists.
 
-See the [repository README](https://github.com/loky974587/JamfDotNet).
+See the [repository README](https://github.com/anthonychaussin/JamfDotNet).

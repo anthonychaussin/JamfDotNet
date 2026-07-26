@@ -18,4 +18,4 @@ var school = provider.GetRequiredService<JamfSchoolClient>();
 var devices = await school.Devices.ListAsync();
 ```
 
-See the [repository README](https://github.com/loky974587/JamfDotNet).
+See the [repository README](https://github.com/anthonychaussin/JamfDotNet).

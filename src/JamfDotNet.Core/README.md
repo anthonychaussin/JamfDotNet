@@ -19,4 +19,4 @@ Usually referenced transitively via a product package (`JamfDotNet.Pro`, `JamfDo
 
 XML documentation for public APIs is included in the package (IntelliSense).
 
-See the [repository README](https://github.com/loky974587/JamfDotNet) and [AGENTS.md](https://github.com/loky974587/JamfDotNet/blob/main/AGENTS.md).
+See the [repository README](https://github.com/anthonychaussin/JamfDotNet) and [AGENTS.md](https://github.com/anthonychaussin/JamfDotNet/blob/main/AGENTS.md).
