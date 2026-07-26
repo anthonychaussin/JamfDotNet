@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>JamfDotNet.Platform</RootNamespace>
+    <AssemblyName>JamfDotNet.Platform</AssemblyName>
+    <Description>Strongly typed .NET client for the Jamf Platform API Gateway.</Description>
+    <PackageId>JamfDotNet.Platform</PackageId>
+    <PackageTags>jamf;platform;apigw;blueprints;mdm;api;kiota;openapi</PackageTags>
+    <IsPackable>true</IsPackable>
+    <PackageIcon>package-icon.png</PackageIcon>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JamfDotNet.Core\JamfDotNet.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="..\..\assets\package-icon-platform.png" Pack="true" PackagePath="package-icon.png" Link="package-icon.png" />
+  </ItemGroup>
+
+</Project>

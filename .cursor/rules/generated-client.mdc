@@ -1,0 +1,16 @@
+---
+description: Rules for Kiota-generated Jamf client code
+globs: src/JamfDotNet.*/Generated/**/*.cs
+alwaysApply: false
+---
+
+# Generated client code
+
+- Treat this tree as **read-only**.
+- Pro: `scripts/Fetch-JamfProSchema.ps1` → `scripts/Generate-JamfProClient.ps1`
+- Classic: `scripts/Fetch-JamfClassicSchema.ps1` → `scripts/Generate-JamfClassicClient.ps1`
+- Platform: `scripts/Fetch-JamfPlatformSpecs.ps1` → `scripts/Generate-JamfPlatformClient.ps1`
+- Title Editor: `scripts/Assemble-JamfTitleEditorSchema.ps1` or `Fetch-JamfTitleEditorSchema.ps1` → `scripts/Generate-JamfTitleEditorClient.ps1`
+- Hand-written DX wrappers belong outside `Generated/`.
+- Protect and School are not Kiota-generated.
+- Missing XML on Generated members is expected; façades outside this tree must stay documented.

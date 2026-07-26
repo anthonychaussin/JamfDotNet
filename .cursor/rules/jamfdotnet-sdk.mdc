@@ -1,0 +1,17 @@
+---
+description: Core JamfDotNet SDK conventions for every agent session
+alwaysApply: true
+---
+
+# JamfDotNet conventions
+
+- Public API, XML docs, README, and commit-facing text are **English**.
+- Packages: `JamfDotNet.Core`, `JamfDotNet.Pro`, `JamfDotNet.Classic`, `JamfDotNet.Platform`, `JamfDotNet.Protect`, `JamfDotNet.School`, `JamfDotNet.TitleEditor`.
+- XML docs required on public hand-written members; never rely on Generated XML.
+- Never hand-edit `**/Generated/**`. Regenerate via scripts under `scripts/`.
+- Do not regenerate Pro/Classic from Platform monolith OpenAPI specs.
+- Prefer file-scoped namespaces, nullable reference types, and XML docs on public members.
+- Auth and DI helpers live in Core; product packages expose thin façades (Kiota or typed HTTP/GraphQL).
+- Protect uses GraphQL at `{base}/app`; School uses Basic + `X-Server-Protocol-Version`.
+- Do not hard-code Jamf credentials in source or CI.
+- Native AOT is not claimed yet (JSON reflection + Kiota Generated).

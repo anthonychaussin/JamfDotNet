@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>JamfDotNet.Pro</RootNamespace>
+    <AssemblyName>JamfDotNet.Pro</AssemblyName>
+    <Description>Strongly typed .NET client for the Jamf Pro API.</Description>
+    <PackageId>JamfDotNet.Pro</PackageId>
+    <PackageTags>jamf;jamf-pro;mdm;api;kiota;openapi</PackageTags>
+    <IsPackable>true</IsPackable>
+    <PackageIcon>package-icon.png</PackageIcon>
+    <!-- Generated Kiota sources omit XML docs; hand-written façade is still documented. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\JamfDotNet.Core\JamfDotNet.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="..\..\assets\package-icon-pro.png" Pack="true" PackagePath="package-icon.png" Link="package-icon.png" />
+    <None Include="..\..\assets\icon-pro.ico" Link="icon.ico" />
+  </ItemGroup>
+
+</Project>

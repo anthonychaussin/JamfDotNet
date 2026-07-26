@@ -1,0 +1,34 @@
+{
+  "descriptionHash": "CBF07F3471F3A757A998DCFBE70FA1E54AE2CDB3A04A5AAD5E7EE7DB196CA9D01F6BF8F4847940BA819C6A7F2006481970348031C50DA132FBC3F09B5D4BF5F7",
+  "descriptionLocation": "../../../../openapi/platform/app_installer_global_settings_api.json",
+  "lockFileVersion": "1.0.0",
+  "kiotaVersion": "1.29.0",
+  "clientClassName": "AppInstallerSettingsApiClient",
+  "typeAccessModifier": "Public",
+  "clientNamespaceName": "JamfDotNet.Platform.Generated.AppInstallerSettings",
+  "language": "CSharp",
+  "usesBackingStore": false,
+  "excludeBackwardCompatible": true,
+  "includeAdditionalData": false,
+  "disableSSLValidation": false,
+  "serializers": [
+    "Microsoft.Kiota.Serialization.Json.JsonSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Text.TextSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Form.FormSerializationWriterFactory",
+    "Microsoft.Kiota.Serialization.Multipart.MultipartSerializationWriterFactory"
+  ],
+  "deserializers": [
+    "Microsoft.Kiota.Serialization.Json.JsonParseNodeFactory",
+    "Microsoft.Kiota.Serialization.Text.TextParseNodeFactory",
+    "Microsoft.Kiota.Serialization.Form.FormParseNodeFactory"
+  ],
+  "structuredMimeTypes": [
+    "application/json",
+    "text/plain;q=0.9",
+    "application/x-www-form-urlencoded;q=0.2",
+    "multipart/form-data;q=0.1"
+  ],
+  "includePatterns": [],
+  "excludePatterns": [],
+  "disabledValidationRules": []
+}

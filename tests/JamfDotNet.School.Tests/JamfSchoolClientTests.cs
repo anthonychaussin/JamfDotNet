@@ -1,0 +1,60 @@
+using System.Text;
+using JamfDotNet.Core;
+using JamfDotNet.School;
+using Microsoft.Extensions.DependencyInjection;
+using RichardSzalay.MockHttp;
+
+namespace JamfDotNet.School.Tests;
+
+public sealed class JamfSchoolClientTests
+{
+    [Fact]
+    public void AddJamfSchoolClient_Registers_Client()
+    {
+        var services = new ServiceCollection();
+        services.AddJamfSchoolClient(o =>
+        {
+            o.BaseUrl = new Uri("https://contoso.jamfcloud.com");
+            o.NetworkId = "network";
+            o.ApiKey = "key";
+        });
+
+        using var provider = services.BuildServiceProvider();
+        var client = provider.GetRequiredService<JamfSchoolClient>();
+        Assert.NotNull(client.Devices);
+        Assert.NotNull(client.Users);
+        Assert.NotNull(client.Classes);
+    }
+
+    [Fact]
+    public async Task Devices_ListAsync_Deserializes_Typed_Response()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "https://contoso.jamfcloud.com/api/devices")
+            .With(req =>
+            {
+                Assert.Equal("Basic", req.Headers.Authorization?.Scheme);
+                var expected = Convert.ToBase64String(Encoding.UTF8.GetBytes("network:key"));
+                Assert.Equal(expected, req.Headers.Authorization?.Parameter);
+                Assert.True(req.Headers.TryGetValues("X-Server-Protocol-Version", out var values));
+                Assert.Equal("3", values.Single());
+                return true;
+            })
+            .Respond("application/json", """{ "code": 200, "devices": [ { "UDID": "abc", "name": "iPad", "serialNumber": "SN1" } ] }""");
+
+        var options = new JamfSchoolOptions
+        {
+            BaseUrl = new Uri("https://contoso.jamfcloud.com"),
+            NetworkId = "network",
+            ApiKey = "key",
+        };
+        using var http = mock.ToHttpClient();
+        using var client = JamfSchoolClient.Create(options, http);
+        var response = await client.Devices.ListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(200, response.Code);
+        Assert.NotNull(response.Devices);
+        Assert.Single(response.Devices!);
+        Assert.Equal("abc", response.Devices![0].Udid);
+        Assert.Equal("iPad", response.Devices[0].Name);
+    }
+}

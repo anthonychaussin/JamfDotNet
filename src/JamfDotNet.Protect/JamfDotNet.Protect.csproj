@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <RootNamespace>JamfDotNet.Protect</RootNamespace>
+    <AssemblyName>JamfDotNet.Protect</AssemblyName>
+    <Description>Typed .NET client for the Jamf Protect GraphQL API.</Description>
+    <PackageId>JamfDotNet.Protect</PackageId>
+    <PackageTags>jamf;protect;graphql;security;api</PackageTags>
+    <IsPackable>true</IsPackable>
+    <PackageIcon>package-icon.png</PackageIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\JamfDotNet.Core\JamfDotNet.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="..\..\assets\package-icon-protect.png" Pack="true" PackagePath="package-icon.png" Link="package-icon.png" />
+  </ItemGroup>
+</Project>

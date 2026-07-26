@@ -1,0 +1,630 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Jamf Title Editor API",
+    "description": "Assembled OpenAPI snapshot from developer.jamf.com Title Editor reference (auth, software titles, sources, users, patches, preferences). Prefer regenerating from an instance `{host}/api` schema when available.",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://yourServer.appcatalog.jamfcloud.com/v2"
+    }
+  ],
+  "paths": {
+    "/auth/token": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Create token via basic authentication",
+        "operationId": "createToken",
+        "security": [{ "basic": [] }],
+        "responses": {
+          "200": {
+            "description": "Token created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthToken" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/keepalive": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Refresh bearer token",
+        "operationId": "refreshToken",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Token refreshed",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthToken" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/token/claims": {
+      "get": {
+        "tags": ["auth"],
+        "summary": "Get token claims",
+        "operationId": "getTokenClaims",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Token claims",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object", "additionalProperties": true }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/softwaretitles": {
+      "get": {
+        "tags": ["softwaretitles"],
+        "summary": "Get software titles",
+        "operationId": "getSoftwareTitles",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Software titles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/SoftwareTitleList" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["softwaretitles"],
+        "summary": "Create software title",
+        "operationId": "addSoftwareTitle",
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SoftwareTitle" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SoftwareTitle" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/softwaretitles/{id}": {
+      "get": {
+        "tags": ["softwaretitles"],
+        "summary": "Get software title",
+        "operationId": "getSoftwareTitle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Software title",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SoftwareTitle" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["softwaretitles"],
+        "summary": "Update software title",
+        "operationId": "updateSoftwareTitle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SoftwareTitle" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SoftwareTitle" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["softwaretitles"],
+        "summary": "Delete software title",
+        "operationId": "deleteSoftwareTitle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "204": { "description": "Deleted" }
+        }
+      }
+    },
+    "/sources": {
+      "get": {
+        "tags": ["sources"],
+        "summary": "Get sources",
+        "operationId": "getSources",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Sources",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Source" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["sources"],
+        "summary": "Create source",
+        "operationId": "addSource",
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Source" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Source" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sources/{id}": {
+      "get": {
+        "tags": ["sources"],
+        "summary": "Get source",
+        "operationId": "getSource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Source",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Source" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["sources"],
+        "summary": "Update source",
+        "operationId": "updateSource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Source" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Source" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["sources"],
+        "summary": "Delete source",
+        "operationId": "deleteSource",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "204": { "description": "Deleted" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["users"],
+        "summary": "Get users",
+        "operationId": "getUsers",
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["users"],
+        "summary": "Create user",
+        "operationId": "addUser",
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": ["users"],
+        "summary": "Get user",
+        "operationId": "getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "User",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["users"],
+        "summary": "Update user",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["users"],
+        "summary": "Delete user",
+        "operationId": "deleteUser",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "204": { "description": "Deleted" }
+        }
+      }
+    },
+    "/patches/{id}": {
+      "get": {
+        "tags": ["patches"],
+        "summary": "Get patch",
+        "operationId": "getPatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Patch",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Patch" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["patches"],
+        "summary": "Update patch",
+        "operationId": "updatePatch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Patch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Patch" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preferences/{key}": {
+      "get": {
+        "tags": ["preferences"],
+        "summary": "Get preference",
+        "operationId": "getPreference",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "responses": {
+          "200": {
+            "description": "Preference",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Preference" }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["preferences"],
+        "summary": "Set preference",
+        "operationId": "setPreference",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "security": [{ "bearer": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Preference" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Preference" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthToken": {
+        "type": "object",
+        "properties": {
+          "token": { "type": "string" },
+          "expires": { "type": "integer", "description": "Unix epoch seconds" }
+        }
+      },
+      "SoftwareTitleList": {
+        "type": "object",
+        "properties": {
+          "softwareTitleId": { "type": "integer" },
+          "enabled": { "type": "boolean" },
+          "name": { "type": "string" },
+          "publisher": { "type": "string" },
+          "appName": { "type": "string" },
+          "bundleId": { "type": "string" },
+          "lastModified": { "type": "string", "format": "date-time" },
+          "currentVersion": { "type": "string" },
+          "requirements": { "type": "integer" },
+          "patches": { "type": "integer" },
+          "id": { "type": "string" },
+          "sourceId": { "type": "integer" },
+          "source": { "type": "string" }
+        }
+      },
+      "SoftwareTitle": {
+        "type": "object",
+        "properties": {
+          "softwareTitleId": { "type": "integer" },
+          "sourceId": { "type": "integer" },
+          "enabled": { "type": "boolean" },
+          "name": { "type": "string" },
+          "publisher": { "type": "string" },
+          "appName": { "type": "string" },
+          "bundleId": { "type": "string" },
+          "lastModified": { "type": "string", "format": "date-time" },
+          "currentVersion": { "type": "string" },
+          "id": { "type": "string" }
+        }
+      },
+      "Source": {
+        "type": "object",
+        "properties": {
+          "sourceId": { "type": "integer" },
+          "name": { "type": "string" },
+          "hostName": { "type": "string" },
+          "port": { "type": "integer" },
+          "sslEnabled": { "type": "boolean" }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "integer" },
+          "username": { "type": "string" },
+          "email": { "type": "string" },
+          "enabled": { "type": "boolean" }
+        }
+      },
+      "Patch": {
+        "type": "object",
+        "properties": {
+          "patchId": { "type": "integer" },
+          "softwareTitleId": { "type": "integer" },
+          "version": { "type": "string" },
+          "enabled": { "type": "boolean" },
+          "minimumOperatingSystem": { "type": "string" },
+          "reboot": { "type": "boolean" }
+        }
+      },
+      "Preference": {
+        "type": "object",
+        "properties": {
+          "key": { "type": "string" },
+          "value": { "type": "string" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "basic": { "type": "http", "scheme": "basic" },
+      "bearer": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" }
+    }
+  }
+}

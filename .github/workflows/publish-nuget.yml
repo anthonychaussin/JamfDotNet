@@ -1,0 +1,96 @@
+name: Publish NuGet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version to publish (e.g. 0.1.0). Leave empty to use VersionPrefix from the repo."
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: nuget
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore tools
+        run: dotnet tool restore
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION=""
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: '${VERSION:-<VersionPrefix from Directory.Build.props>}'"
+
+      - name: Restore
+        run: dotnet restore JamfDotNet.slnx
+
+      - name: Build
+        run: |
+          if [ -n "${{ steps.version.outputs.version }}" ]; then
+            dotnet build JamfDotNet.slnx -c Release --no-restore -p:Version=${{ steps.version.outputs.version }}
+          else
+            dotnet build JamfDotNet.slnx -c Release --no-restore
+          fi
+
+      - name: Test
+        run: |
+          if [ -n "${{ steps.version.outputs.version }}" ]; then
+            dotnet test JamfDotNet.slnx -c Release --no-build --verbosity normal -p:Version=${{ steps.version.outputs.version }}
+          else
+            dotnet test JamfDotNet.slnx -c Release --no-build --verbosity normal
+          fi
+
+      - name: Pack
+        run: |
+          if [ -n "${{ steps.version.outputs.version }}" ]; then
+            dotnet pack JamfDotNet.slnx -c Release --no-build -o "${GITHUB_WORKSPACE}/artifacts" -p:Version=${{ steps.version.outputs.version }}
+          else
+            dotnet pack JamfDotNet.slnx -c Release --no-build -o "${GITHUB_WORKSPACE}/artifacts"
+          fi
+
+      - name: Publish to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "Missing repository secret NUGET_API_KEY. Add a nuget.org API key under Settings → Secrets → Actions."
+            exit 1
+          fi
+          shopt -s nullglob
+          packages=(artifacts/*.nupkg)
+          if [ ${#packages[@]} -eq 0 ]; then
+            echo "No .nupkg files found in artifacts/"
+            exit 1
+          fi
+          for pkg in "${packages[@]}"; do
+            echo "Pushing $pkg"
+            dotnet nuget push "$pkg" \
+              --api-key "$NUGET_API_KEY" \
+              --source https://api.nuget.org/v3/index.json \
+              --skip-duplicate
+          done

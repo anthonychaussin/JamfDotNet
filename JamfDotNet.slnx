@@ -1,0 +1,19 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/JamfDotNet.Core/JamfDotNet.Core.csproj" />
+    <Project Path="src/JamfDotNet.Pro/JamfDotNet.Pro.csproj" />
+    <Project Path="src/JamfDotNet.Classic/JamfDotNet.Classic.csproj" />
+    <Project Path="src/JamfDotNet.Platform/JamfDotNet.Platform.csproj" />
+    <Project Path="src/JamfDotNet.Protect/JamfDotNet.Protect.csproj" />
+    <Project Path="src/JamfDotNet.School/JamfDotNet.School.csproj" />
+    <Project Path="src/JamfDotNet.TitleEditor/JamfDotNet.TitleEditor.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/JamfDotNet.Pro.Tests/JamfDotNet.Pro.Tests.csproj" />
+    <Project Path="tests/JamfDotNet.Classic.Tests/JamfDotNet.Classic.Tests.csproj" />
+    <Project Path="tests/JamfDotNet.Platform.Tests/JamfDotNet.Platform.Tests.csproj" />
+    <Project Path="tests/JamfDotNet.Protect.Tests/JamfDotNet.Protect.Tests.csproj" />
+    <Project Path="tests/JamfDotNet.School.Tests/JamfDotNet.School.Tests.csproj" />
+    <Project Path="tests/JamfDotNet.TitleEditor.Tests/JamfDotNet.TitleEditor.Tests.csproj" />
+  </Folder>
+</Solution>

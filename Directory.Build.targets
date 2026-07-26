@@ -1,0 +1,6 @@
+<Project>
+  <!-- Evaluated after the project file so $(IsPackable) is reliable. -->
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+</Project>
