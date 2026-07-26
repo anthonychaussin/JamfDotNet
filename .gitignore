@@ -1,12 +1,18 @@
 ## .NET
 bin/
+**/bin/
 obj/
+**/obj/
+!**/Generated/**/Obj/
+!**/Generated/**/Obj/**
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
 [Dd]ebug/
 [Rr]elease/
+!**/Generated/**/Release/
+!**/Generated/**/Release/**
 x64/
 x86/
 [Aa]rtifacts/
@@ -14,7 +20,11 @@ x86/
 *.snupkg
 project.lock.json
 project.fragment.lock.json
+**/NuGet/packages/
+# Do not ignore Kiota-generated API folders named Packages
 packages/
+!**/Generated/**/Packages/
+!**/Generated/**/Packages/**
 
 ## IDE / OS
 .vs/
