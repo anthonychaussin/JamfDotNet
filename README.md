@@ -184,22 +184,6 @@ dotnet pack JamfDotNet.slnx -c Release
 
 See [AGENTS.md](AGENTS.md) and [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflows (including XML documentation requirements).
 
-## Publishing to NuGet.org
-
-Publishing uses [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing) (GitHub Actions OIDC) — no long-lived NuGet API key secret is required.
-
-Configured on nuget.org for:
-
-- Owner / user: `AnthonyChaussin`
-- Repository: `anthonychaussin/JamfDotNet`
-- Workflow file: `publish-nuget.yml`
-- GitHub Environment: `nuget` (match this in the Trusted Publishing policy if set)
-
-CI publishes when:
-
-1. A GitHub Release is published (tag `v0.1.0` → version `0.1.0`), or
-2. The **Publish NuGet** workflow is run manually (`workflow_dispatch`).
-
 ## License
 
 MIT — see [LICENSE](LICENSE).
