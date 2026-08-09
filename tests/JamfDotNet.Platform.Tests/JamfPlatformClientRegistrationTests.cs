@@ -23,6 +23,11 @@ public sealed class JamfPlatformClientRegistrationTests
         Assert.Equal("11111111-1111-1111-1111-111111111111", client.TenantId);
         Assert.NotNull(client.Blueprints);
         Assert.NotNull(client.Devices);
+
+        var tenant = client.ForTenant();
+        Assert.Equal(Guid.Parse("11111111-1111-1111-1111-111111111111"), tenant.TenantId);
+        Assert.NotNull(tenant.Devices);
+        Assert.NotNull(tenant.Blueprints);
     }
 
     [Fact]

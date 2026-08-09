@@ -1,5 +1,6 @@
 using JamfDotNet.Core;
 using JamfDotNet.Core.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -26,6 +27,7 @@ public static class JamfSchoolServiceCollectionExtensions
 
         services.TryAddTransient<BasicAuthHandler>();
         services.AddHttpClient(JamfHttpClientNames.SchoolApi)
+            .AddJamfResilience()
             .AddHttpMessageHandler<BasicAuthHandler>();
 
         services.AddSingleton(sp =>
@@ -36,5 +38,33 @@ public static class JamfSchoolServiceCollectionExtensions
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="JamfSchoolClient"/> by binding options from configuration.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <param name="sectionName">Section name (defaults to <see cref="JamfSchoolOptions.SectionName"/>).</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddJamfSchoolClient(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? sectionName = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        return services.AddJamfSchoolClient(configuration.GetSection(sectionName ?? JamfSchoolOptions.SectionName));
+    }
+
+    /// <summary>
+    /// Registers <see cref="JamfSchoolClient"/> by binding options from a configuration section.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="section">Configuration section.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddJamfSchoolClient(this IServiceCollection services, IConfigurationSection section)
+    {
+        ArgumentNullException.ThrowIfNull(section);
+        return services.AddJamfSchoolClient(options => section.Bind(options));
     }
 }

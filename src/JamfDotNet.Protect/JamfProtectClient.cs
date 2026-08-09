@@ -290,6 +290,135 @@ public sealed class JamfProtectClient : IDisposable
         return QueryConnectionAsync<ProtectExceptionSet>(query, "listExceptionSets", new { input = new { pageSize, next } }, cancellationToken);
     }
 
+    /// <summary>Gets a single alert by UUID.</summary>
+    /// <param name="uuid">Alert UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Alert, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectAlert?> GetAlertAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            query GetAlert($uuid: ID!) {
+              getAlert(uuid: $uuid) {
+                uuid severity status created updated computer { uuid serial hostName }
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectAlert>(query, "getAlert", new { uuid }, cancellationToken);
+    }
+
+    /// <summary>Gets a single computer by UUID.</summary>
+    /// <param name="uuid">Computer UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Computer, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectComputer?> GetComputerAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            query GetComputer($uuid: ID!) {
+              getComputer(uuid: $uuid) {
+                uuid serial hostName osString version checkin created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectComputer>(query, "getComputer", new { uuid }, cancellationToken);
+    }
+
+    /// <summary>Gets a single plan by id.</summary>
+    /// <param name="id">Plan id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Plan, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectPlan?> GetPlanAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            query GetPlan($id: ID!) {
+              getPlan(id: $id) {
+                id uuid name description created updated profileVersion
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectPlan>(query, "getPlan", new { id }, cancellationToken);
+    }
+
+    /// <summary>Updates alert statuses.</summary>
+    /// <param name="uuids">Alert UUIDs to update.</param>
+    /// <param name="status">Target status (<c>New</c>, <c>InProgress</c>, <c>Resolved</c>, or <c>AutoResolved</c>).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated alert connection.</returns>
+    public Task<ProtectConnection<ProtectAlert>> UpdateAlertsAsync(
+        IEnumerable<string> uuids,
+        string status,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(uuids);
+        ArgumentException.ThrowIfNullOrWhiteSpace(status);
+        var uuidList = uuids as IList<string> ?? uuids.ToList();
+        if (uuidList.Count == 0)
+        {
+            throw new ArgumentException("At least one alert UUID is required.", nameof(uuids));
+        }
+
+        const string query = """
+            mutation UpdateAlerts($input: AlertUpdateInput!) {
+              updateAlerts(input: $input) {
+                items { uuid severity status created updated computer { uuid serial hostName } }
+                pageInfo { next total }
+              }
+            }
+            """;
+        return QueryConnectionAsync<ProtectAlert>(
+            query,
+            "updateAlerts",
+            new { input = new { uuids = uuidList, status } },
+            cancellationToken);
+    }
+
+    /// <summary>Creates a Protect group.</summary>
+    /// <param name="name">Group name.</param>
+    /// <param name="roleIds">Optional role ids.</param>
+    /// <param name="accessGroup">Whether the group is an access group.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created group.</returns>
+    public async Task<ProtectGroup> CreateGroupAsync(
+        string name,
+        IEnumerable<string>? roleIds = null,
+        bool? accessGroup = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        const string query = """
+            mutation CreateGroup($input: GroupCreateInput!) {
+              createGroup(input: $input) {
+                id name created updated
+              }
+            }
+            """;
+        var group = await QueryObjectAsync<ProtectGroup>(
+            query,
+            "createGroup",
+            new { input = new { name, roleIds, accessGroup } },
+            cancellationToken).ConfigureAwait(false);
+        return group ?? throw new JamfApiException("Protect createGroup returned no group.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Deletes a Protect group.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted group summary when returned by the API.</returns>
+    public Task<ProtectGroup?> DeleteGroupAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            mutation DeleteGroup($id: ID!) {
+              deleteGroup(id: $id) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectGroup>(query, "deleteGroup", new { id }, cancellationToken);
+    }
+
     private async Task<ProtectConnection<T>> QueryConnectionAsync<T>(
         string query,
         string fieldName,
@@ -307,6 +436,29 @@ public sealed class JamfProtectClient : IDisposable
         var connection = connectionElement.Deserialize<ProtectConnection<T>>(JsonOptions)
             ?? new ProtectConnection<T>();
         return connection;
+    }
+
+    private async Task<T?> QueryObjectAsync<T>(
+        string query,
+        string fieldName,
+        object variables,
+        CancellationToken cancellationToken)
+        where T : class
+    {
+        var json = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(json);
+        if (!document.RootElement.TryGetProperty("data", out var data)
+            || !data.TryGetProperty(fieldName, out var element))
+        {
+            throw new JamfApiException($"Protect GraphQL response did not include data.{fieldName}.", System.Net.HttpStatusCode.OK, json);
+        }
+
+        if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return null;
+        }
+
+        return element.Deserialize<T>(JsonOptions);
     }
 
     private async Task<string> SendGraphQlAsync(string query, object? variables, CancellationToken cancellationToken)

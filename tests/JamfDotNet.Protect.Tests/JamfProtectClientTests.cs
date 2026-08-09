@@ -113,4 +113,78 @@ public sealed class JamfProtectClientTests
         using var doc = await client.ExecuteAsync("{ ping }", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("ok", doc.RootElement.GetProperty("data").GetProperty("ping").GetString());
     }
+
+    [Fact]
+    public async Task EnumerateRolesAsync_Follows_Cursor()
+    {
+        var mock = new MockHttpMessageHandler();
+        var calls = 0;
+        mock.When(HttpMethod.Post, "https://contoso.protect.jamfcloud.com/app")
+            .Respond(async _ =>
+            {
+                calls++;
+                if (calls == 1)
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("""{"data":{"listRoles":{"items":[{"id":"1","name":"A"}],"pageInfo":{"next":"c1","total":2}}}}""", System.Text.Encoding.UTF8, "application/json"),
+                    };
+                }
+
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"data":{"listRoles":{"items":[{"id":"2","name":"B"}],"pageInfo":{"next":null,"total":2}}}}""", System.Text.Encoding.UTF8, "application/json"),
+                };
+            });
+
+        var options = new JamfProtectOptions
+        {
+            BaseUrl = new Uri("https://contoso.protect.jamfcloud.com"),
+            ClientId = "id",
+            ClientSecret = "secret",
+        };
+        using var http = mock.ToHttpClient();
+        using var client = new JamfProtectClient(http, options.GraphQlEndpoint);
+
+        var names = new List<string>();
+        await foreach (var role in client.EnumerateRolesAsync(cancellationToken: TestContext.Current.CancellationToken))
+        {
+            names.Add(role.Name!);
+        }
+
+        Assert.Equal(["A", "B"], names);
+        Assert.Equal(2, calls);
+    }
+
+    [Fact]
+    public async Task GetAlertAsync_And_UpdateAlertsAsync_Work()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "https://contoso.protect.jamfcloud.com/app")
+            .Respond(async request =>
+            {
+                var body = await request.Content!.ReadAsStringAsync();
+                if (body.Contains("getAlert", StringComparison.Ordinal))
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("""{"data":{"getAlert":{"uuid":"a1","status":"New","severity":"High"}}}""", System.Text.Encoding.UTF8, "application/json"),
+                    };
+                }
+
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"data":{"updateAlerts":{"items":[{"uuid":"a1","status":"Resolved"}],"pageInfo":{"total":1}}}}""", System.Text.Encoding.UTF8, "application/json"),
+                };
+            });
+
+        using var http = mock.ToHttpClient();
+        using var client = new JamfProtectClient(http, new Uri("https://contoso.protect.jamfcloud.com/app"));
+
+        var alert = await client.GetAlertAsync("a1", TestContext.Current.CancellationToken);
+        Assert.Equal("High", alert!.Severity);
+
+        var updated = await client.UpdateAlertsAsync(["a1"], "Resolved", TestContext.Current.CancellationToken);
+        Assert.Equal("Resolved", updated.Items![0].Status);
+    }
 }

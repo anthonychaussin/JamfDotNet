@@ -57,4 +57,46 @@ public sealed class JamfSchoolClientTests
         Assert.Equal("abc", response.Devices![0].Udid);
         Assert.Equal("iPad", response.Devices[0].Name);
     }
+
+    [Fact]
+    public async Task Devices_RestartAsync_Posts_Command()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.Expect(HttpMethod.Post, "https://contoso.jamfcloud.com/api/devices/abc/restart")
+            .Respond(System.Net.HttpStatusCode.NoContent);
+
+        var options = new JamfSchoolOptions
+        {
+            BaseUrl = new Uri("https://contoso.jamfcloud.com"),
+            NetworkId = "network",
+            ApiKey = "key",
+        };
+        using var http = mock.ToHttpClient();
+        using var client = JamfSchoolClient.Create(options, http);
+        await client.Devices.RestartAsync("abc", TestContext.Current.CancellationToken);
+        mock.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task Users_CreateAsync_Posts_Json()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.Expect(HttpMethod.Post, "https://contoso.jamfcloud.com/api/users")
+            .Respond("application/json", """{ "code": 200, "user": { "id": 9, "username": "student1" } }""");
+
+        var options = new JamfSchoolOptions
+        {
+            BaseUrl = new Uri("https://contoso.jamfcloud.com"),
+            NetworkId = "network",
+            ApiKey = "key",
+        };
+        using var http = mock.ToHttpClient();
+        using var client = JamfSchoolClient.Create(options, http);
+        var created = await client.Users.CreateAsync(
+            new Models.SchoolUserWriteRequest { Username = "student1" },
+            TestContext.Current.CancellationToken);
+        Assert.Equal(9, created.User!.Id);
+        Assert.Equal("student1", created.User.Username);
+        mock.VerifyNoOutstandingExpectation();
+    }
 }

@@ -137,6 +137,32 @@ public sealed class SchoolUserResponse : SchoolApiResponse
     public SchoolUser? User { get; set; }
 }
 
+/// <summary>Payload used to create or update a School user.</summary>
+public sealed class SchoolUserWriteRequest
+{
+    /// <summary>Username.</summary>
+    public string? Username { get; set; }
+
+    /// <summary>Email.</summary>
+    public string? Email { get; set; }
+
+    /// <summary>First name.</summary>
+    public string? FirstName { get; set; }
+
+    /// <summary>Last name.</summary>
+    public string? LastName { get; set; }
+
+    /// <summary>Location id.</summary>
+    public int? LocationId { get; set; }
+
+    /// <summary>Password (when required by the School instance).</summary>
+    public string? Password { get; set; }
+
+    /// <summary>Additional properties forwarded as-is.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+}
+
 /// <summary>User group summary.</summary>
 public sealed class SchoolUserGroup
 {

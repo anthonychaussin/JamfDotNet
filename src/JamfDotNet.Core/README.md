@@ -6,8 +6,10 @@ Shared authentication, options, HTTP helpers, and DI primitives used by all Jamf
 
 - OAuth2 / basic→bearer token providers for Jamf Pro instances
 - Platform, Protect, School, and Title Editor options + token providers
-- `BearerAuthHandler` / `BasicAuthHandler`
-- `JamfApiException` and named `HttpClient` constants
+- `BearerAuthHandler` / `BasicAuthHandler` / `JamfResilienceHandler` (429/503 + 401 refresh)
+- `JamfApiException`, Kiota remapping via `AsJamfApiAsync()`, and `JamfPagination`
+- `JamfDeviceClassifier` — map Apple `modelIdentifier` + Jamf type/platform to iPhone / iPad / Mac / Apple TV / …
+- Named `HttpClient` constants and `AddJamfCore(IConfiguration)`
 
 ## Install
 

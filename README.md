@@ -14,6 +14,17 @@ Each packable project targets **`net8.0` and `net10.0`** in a single NuGet packa
 | <img src="assets/package-icon-school.png" alt="JamfDotNet.School" width="28" /> | `JamfDotNet.School` | Jamf School REST client (Basic + protocol version) |
 | <img src="assets/package-icon-titleeditor.png" alt="JamfDotNet.TitleEditor" width="28" /> | `JamfDotNet.TitleEditor` | Title Editor API client (Kiota, bearer + keepalive) |
 
+## Which package should I use?
+
+| Need | Package | Notes |
+|------|---------|--------|
+| Jamf Pro modern `/api` | `JamfDotNet.Pro` | Full OpenAPI snapshot via Kiota (`client.Api…`) |
+| Legacy Classic `/JSSResource` | `JamfDotNet.Classic` | Writes often need XML; prefer Pro when possible |
+| Platform Gateway (blueprints, DDM, compliance) | `JamfDotNet.Platform` | Nine gateway services; use `ForTenant()` for tenant paths |
+| Protect GraphQL security product | `JamfDotNet.Protect` | Not the same as Pro `/v1/jamf-protect` registration |
+| Jamf School MDM | `JamfDotNet.School` | Typed reads + device commands / user writes; `SendDocumentAsync` escape hatch |
+| Title Editor / App Catalog | `JamfDotNet.TitleEditor` | Regenerate from your instance when possible |
+
 ## Requirements
 
 - .NET 8.0 or .NET 10.0
@@ -33,6 +44,8 @@ services.AddJamfProClient(options =>
     options.ClientSecret = Environment.GetEnvironmentVariable("JAMF_CLIENT_SECRET")!;
 });
 
+// Or bind from appsettings: services.AddJamfProClient(configuration); // section "Jamf"
+
 await using var provider = services.BuildServiceProvider();
 var jamf = provider.GetRequiredService<JamfProClient>();
 
@@ -41,6 +54,11 @@ var inventory = await jamf.Api.V1.ComputersInventory.GetAsync(config =>
     config.QueryParameters.Page = 0;
     config.QueryParameters.PageSize = 100;
 });
+
+await foreach (var computer in jamf.EnumerateComputersInventoryAsync(pageSize: 100))
+{
+    // …
+}
 ```
 
 ## Quick start (Classic API)
@@ -75,6 +93,8 @@ services.AddJamfPlatformClient(o =>
     o.TenantId = "...";
 });
 var platform = provider.GetRequiredService<JamfPlatformClient>();
+var tenant = platform.ForTenant(); // Guid-parsed tenant builders
+var devices = await tenant.Devices.Devices.GetAsync();
 ```
 
 ## Quick start (Protect GraphQL)
@@ -88,6 +108,8 @@ services.AddJamfProtectClient(o =>
 });
 var protect = provider.GetRequiredService<JamfProtectClient>();
 var roles = await protect.ListRolesAsync();
+await foreach (var computer in protect.EnumerateComputersAsync()) { /* … */ }
+var alert = await protect.GetAlertAsync(uuid);
 using var raw = await protect.ExecuteAsync(query, variables);
 ```
 
@@ -105,6 +127,7 @@ services.AddJamfSchoolClient(o =>
 });
 var school = provider.GetRequiredService<JamfSchoolClient>();
 var devices = await school.Devices.ListAsync();
+await school.Devices.RestartAsync(udid);
 ```
 
 ## Quick start (Title Editor)
@@ -121,6 +144,13 @@ var list = await titles.Api.Softwaretitles.GetAsync();
 ```
 
 > Classic create/update operations generally require XML bodies. Prefer the Jamf Pro API for new work when an equivalent endpoint exists.
+
+## Pagination, errors, and resilience
+
+- **Pagination:** `JamfPagination` in Core; Protect `Enumerate*Async`; Pro `EnumerateComputersInventoryAsync`.
+- **Errors:** School / Protect throw `JamfApiException`. Kiota calls can be remapped with `.AsJamfApiAsync()` (`JamfKiotaExceptionExtensions`).
+- **Resilience:** Named HTTP clients retry **429** / **503** and refresh bearer tokens once after **401** (when a token provider is registered).
+- **Configuration:** every `AddJamf*Client` overload accepts `IConfiguration` / `IConfigurationSection` (see each options `SectionName`).
 
 ## OpenAPI & code generation
 

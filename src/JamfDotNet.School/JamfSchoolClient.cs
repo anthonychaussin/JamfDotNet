@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,7 +14,7 @@ namespace JamfDotNet.School;
 /// Typed HTTP client for the Jamf School REST API.
 /// </summary>
 /// <remarks>
-/// When constructed via <see cref="JamfSchoolServiceCollectionExtensions.AddJamfSchoolClient"/>,
+/// When constructed via DI (<see cref="JamfSchoolServiceCollectionExtensions"/>),
 /// <see cref="BasicAuthHandler"/> attaches credentials and the protocol version header.
 /// Standalone <see cref="Create(JamfSchoolOptions, HttpClient?)"/> also applies those headers per request as a fallback.
 /// </remarks>
@@ -132,6 +133,40 @@ public sealed class JamfSchoolClient : IDisposable
     public Task<JsonDocument> GetDocumentAsync(string relativePath, CancellationToken cancellationToken = default) =>
         GetDocumentInternalAsync(relativePath, cancellationToken);
 
+    /// <summary>
+    /// Escape hatch: send an arbitrary JSON request under <c>/api/</c> and return the raw JSON document.
+    /// </summary>
+    /// <param name="method">HTTP method.</param>
+    /// <param name="relativePath">Path relative to <c>/api/</c>.</param>
+    /// <param name="body">Optional JSON-serializable body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Parsed JSON document (caller owns disposal).</returns>
+    public async Task<JsonDocument> SendDocumentAsync(
+        HttpMethod method,
+        string relativePath,
+        object? body = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(method);
+        HttpContent? content = body is null ? null : JsonContent.Create(body, options: JsonOptions);
+        using var response = await SendAsync(method, relativePath, content, cancellationToken).ConfigureAwait(false);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new JamfApiException(
+                $"Jamf School {method} {relativePath} failed with status {(int)response.StatusCode}.",
+                response.StatusCode,
+                responseBody);
+        }
+
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return JsonDocument.Parse("{}");
+        }
+
+        return JsonDocument.Parse(responseBody);
+    }
+
     internal async Task<T> GetAsync<T>(string relativePath, CancellationToken cancellationToken)
     {
         using var response = await SendAsync(HttpMethod.Get, relativePath, content: null, cancellationToken).ConfigureAwait(false);
@@ -146,6 +181,43 @@ public sealed class JamfSchoolClient : IDisposable
 
         return JsonSerializer.Deserialize<T>(body, JsonOptions)
             ?? throw new JamfApiException($"Jamf School GET {relativePath} returned an empty body.", response.StatusCode, body);
+    }
+
+    internal async Task<T> SendJsonAsync<T>(HttpMethod method, string relativePath, object? body, CancellationToken cancellationToken)
+    {
+        HttpContent? content = body is null ? null : JsonContent.Create(body, options: JsonOptions);
+        using var response = await SendAsync(method, relativePath, content, cancellationToken).ConfigureAwait(false);
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new JamfApiException(
+                $"Jamf School {method} {relativePath} failed with status {(int)response.StatusCode}.",
+                response.StatusCode,
+                responseBody);
+        }
+
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return Activator.CreateInstance<T>()
+                ?? throw new JamfApiException($"Jamf School {method} {relativePath} returned an empty body.", response.StatusCode, responseBody);
+        }
+
+        return JsonSerializer.Deserialize<T>(responseBody, JsonOptions)
+            ?? throw new JamfApiException($"Jamf School {method} {relativePath} returned an empty body.", response.StatusCode, responseBody);
+    }
+
+    internal async Task SendNoContentAsync(HttpMethod method, string relativePath, object? body, CancellationToken cancellationToken)
+    {
+        HttpContent? content = body is null ? null : JsonContent.Create(body, options: JsonOptions);
+        using var response = await SendAsync(method, relativePath, content, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            throw new JamfApiException(
+                $"Jamf School {method} {relativePath} failed with status {(int)response.StatusCode}.",
+                response.StatusCode,
+                responseBody);
+        }
     }
 
     internal async Task<JsonDocument> GetDocumentInternalAsync(string relativePath, CancellationToken cancellationToken)
@@ -223,6 +295,36 @@ public sealed class SchoolDevicesResource
     /// <returns>Raw JSON (caller owns disposal).</returns>
     public Task<JsonDocument> ListDocumentAsync(CancellationToken cancellationToken = default) =>
         _client.GetDocumentAsync("devices", cancellationToken);
+
+    /// <summary>Restarts a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task RestartAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "restart", cancellationToken);
+
+    /// <summary>Wipes a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task WipeAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "wipe", cancellationToken);
+
+    /// <summary>Locks a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task LockAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "lock", cancellationToken);
+
+    /// <summary>Clears the passcode on a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task ClearPasscodeAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "clearpasscode", cancellationToken);
+
+    private Task SendDeviceCommandAsync(string udid, string command, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(udid);
+        return _client.SendNoContentAsync(HttpMethod.Post, $"devices/{Uri.EscapeDataString(udid)}/{command}", body: null, cancellationToken);
+    }
 }
 
 /// <summary>Device groups resource.</summary>
@@ -265,6 +367,33 @@ public sealed class SchoolUsersResource
     /// <returns>User envelope.</returns>
     public Task<SchoolUserResponse> GetAsync(int id, CancellationToken cancellationToken = default) =>
         _client.GetAsync<SchoolUserResponse>($"users/{id}", cancellationToken);
+
+    /// <summary>Creates a user.</summary>
+    /// <param name="request">User create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created user envelope.</returns>
+    public Task<SchoolUserResponse> CreateAsync(SchoolUserWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolUserResponse>(HttpMethod.Post, "users", request, cancellationToken);
+    }
+
+    /// <summary>Updates a user.</summary>
+    /// <param name="id">User id.</param>
+    /// <param name="request">User update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated user envelope.</returns>
+    public Task<SchoolUserResponse> UpdateAsync(int id, SchoolUserWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolUserResponse>(HttpMethod.Put, $"users/{id}", request, cancellationToken);
+    }
+
+    /// <summary>Deletes a user.</summary>
+    /// <param name="id">User id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default) =>
+        _client.SendNoContentAsync(HttpMethod.Delete, $"users/{id}", body: null, cancellationToken);
 }
 
 /// <summary>User groups resource.</summary>

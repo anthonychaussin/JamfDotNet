@@ -14,6 +14,7 @@ services.AddJamfProClient(options =>
 
 var jamf = provider.GetRequiredService<JamfProClient>();
 var inventory = await jamf.Api.V1.ComputersInventory.GetAsync();
+await foreach (var computer in jamf.EnumerateComputersInventoryAsync()) { /* … */ }
 ```
 
 Targets `net8.0` and `net10.0` in one NuGet package.

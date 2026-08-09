@@ -16,6 +16,7 @@ services.AddJamfSchoolClient(o =>
 
 var school = provider.GetRequiredService<JamfSchoolClient>();
 var devices = await school.Devices.ListAsync();
+await school.Devices.RestartAsync(udid);
 ```
 
 See the [repository README](https://github.com/anthonychaussin/JamfDotNet).

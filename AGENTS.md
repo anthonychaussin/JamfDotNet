@@ -48,7 +48,14 @@ Do **not** regenerate Pro/Classic from Platform monolith OpenAPI specs.
 
 ## Protect maintenance
 
-Protect is hand-written against `graphql/jamf-protect.schema.graphql`. Add typed operations next to existing `List*Async` methods and keep `ExecuteAsync` as the escape hatch. Update models under `src/JamfDotNet.Protect/Models/`.
+Protect is hand-written against `graphql/jamf-protect.schema.graphql`. Add typed operations next to existing `List*Async` / `Get*Async` methods, keep `Enumerate*Async` pagination helpers in sync, and keep `ExecuteAsync` as the escape hatch. Update models under `src/JamfDotNet.Protect/Models/`.
+
+## DX helpers (Core)
+
+- `JamfPagination` — cursor and page/page-size `IAsyncEnumerable` helpers
+- `JamfApiException.FromApiException` / `AsJamfApiAsync()` — unify Kiota errors
+- `JamfResilienceHandler` — 429/503 retries + one 401 token refresh
+- `AddJamf*Client(IConfiguration)` — appsettings binding via each options `SectionName`
 
 ## Packaging
 

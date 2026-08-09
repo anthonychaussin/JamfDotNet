@@ -14,7 +14,8 @@ services.AddJamfPlatformClient(o =>
 });
 
 var platform = provider.GetRequiredService<JamfPlatformClient>();
-// platform.Blueprints, platform.Devices, platform.Compliance, ...
+var tenant = platform.ForTenant();
+// tenant.Blueprints, tenant.Devices, tenant.Compliance, ...
 ```
 
 This package does **not** replace `JamfDotNet.Pro` / `JamfDotNet.Classic`.

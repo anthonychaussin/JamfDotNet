@@ -1,4 +1,6 @@
 using JamfDotNet.Core.Authentication;
+using JamfDotNet.Core.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -36,6 +38,53 @@ public static class JamfServiceCollectionExtensions
         services.TryAddSingleton<IAuthenticationProvider, JamfKiotaAuthenticationProvider>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers Jamf core services by binding <see cref="JamfClientOptions"/> from configuration.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <param name="sectionName">Section name (defaults to <see cref="JamfClientOptions.SectionName"/>).</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddJamfCore(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? sectionName = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        return services.AddJamfCore(configuration.GetSection(sectionName ?? JamfClientOptions.SectionName));
+    }
+
+    /// <summary>
+    /// Registers Jamf core services by binding <see cref="JamfClientOptions"/> from a configuration section.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="section">Configuration section.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddJamfCore(this IServiceCollection services, IConfigurationSection section)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(section);
+        return services.AddJamfCore(options => section.Bind(options));
+    }
+
+    /// <summary>
+    /// Adds <see cref="JamfResilienceHandler"/> to a named HTTP client builder.
+    /// </summary>
+    /// <param name="builder">HTTP client builder.</param>
+    /// <param name="tokenProviderFactory">
+    /// Optional factory for the token provider used on 401 refresh.
+    /// When <see langword="null"/>, only 429 / 503 retries are enabled.
+    /// </param>
+    /// <returns>The same builder.</returns>
+    public static IHttpClientBuilder AddJamfResilience(
+        this IHttpClientBuilder builder,
+        Func<IServiceProvider, IJamfTokenProvider?>? tokenProviderFactory = null)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+        return builder.AddHttpMessageHandler(sp =>
+            new JamfResilienceHandler(tokenProviderFactory?.Invoke(sp)));
     }
 }
 

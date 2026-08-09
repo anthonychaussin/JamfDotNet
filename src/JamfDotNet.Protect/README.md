@@ -16,6 +16,8 @@ services.AddJamfProtectClient(o =>
 
 var protect = provider.GetRequiredService<JamfProtectClient>();
 var roles = await protect.ListRolesAsync();
+await foreach (var computer in protect.EnumerateComputersAsync()) { /* … */ }
+var alert = await protect.GetAlertAsync(uuid);
 using var raw = await protect.ExecuteAsync(query, variables);
 ```
 

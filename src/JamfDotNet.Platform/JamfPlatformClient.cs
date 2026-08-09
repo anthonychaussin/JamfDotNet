@@ -54,6 +54,32 @@ public sealed class JamfPlatformClient : IDisposable
     /// <summary>Tenant id used for <c>/v1/tenant/{tenantId}</c> paths.</summary>
     public string TenantId { get; }
 
+    /// <summary>
+    /// Returns tenant-scoped builders for services that require <c>/v1/tenant/{tenantId}</c>,
+    /// using <see cref="TenantId"/>.
+    /// </summary>
+    /// <returns>Tenant scope for the configured tenant.</returns>
+    /// <exception cref="FormatException">Thrown when <see cref="TenantId"/> is not a valid <see cref="Guid"/>.</exception>
+    public JamfPlatformTenantScope ForTenant() => ForTenant(TenantId);
+
+    /// <summary>
+    /// Returns tenant-scoped builders for the given tenant id string.
+    /// </summary>
+    /// <param name="tenantId">Tenant id (GUID string).</param>
+    /// <returns>Tenant scope.</returns>
+    public JamfPlatformTenantScope ForTenant(string tenantId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(tenantId);
+        return ForTenant(Guid.Parse(tenantId));
+    }
+
+    /// <summary>
+    /// Returns tenant-scoped builders for the given tenant id.
+    /// </summary>
+    /// <param name="tenantId">Tenant id.</param>
+    /// <returns>Tenant scope.</returns>
+    public JamfPlatformTenantScope ForTenant(Guid tenantId) => new(this, tenantId);
+
     /// <summary>Blueprints service client.</summary>
     public BlueprintsApiClient Blueprints { get; }
 

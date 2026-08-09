@@ -1,6 +1,7 @@
 using JamfDotNet.Core;
 using JamfDotNet.Core.Authentication;
 using JamfDotNet.Core.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -35,6 +36,7 @@ public static class JamfProtectServiceCollectionExtensions
         });
 
         services.AddHttpClient(JamfHttpClientNames.ProtectApi)
+            .AddJamfResilience(static sp => sp.GetService<JamfProtectTokenProvider>())
             .AddHttpMessageHandler(sp => new BearerAuthHandler(sp.GetRequiredService<JamfProtectTokenProvider>()));
 
         services.AddSingleton(sp =>
@@ -45,5 +47,33 @@ public static class JamfProtectServiceCollectionExtensions
         });
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="JamfProtectClient"/> by binding options from configuration.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <param name="sectionName">Section name (defaults to <see cref="JamfProtectOptions.SectionName"/>).</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddJamfProtectClient(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? sectionName = null)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        return services.AddJamfProtectClient(configuration.GetSection(sectionName ?? JamfProtectOptions.SectionName));
+    }
+
+    /// <summary>
+    /// Registers <see cref="JamfProtectClient"/> by binding options from a configuration section.
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="section">Configuration section.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection AddJamfProtectClient(this IServiceCollection services, IConfigurationSection section)
+    {
+        ArgumentNullException.ThrowIfNull(section);
+        return services.AddJamfProtectClient(options => section.Bind(options));
     }
 }
