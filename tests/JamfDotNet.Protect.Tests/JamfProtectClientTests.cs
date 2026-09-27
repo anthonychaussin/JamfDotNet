@@ -187,4 +187,119 @@ public sealed class JamfProtectClientTests
         var updated = await client.UpdateAlertsAsync(["a1"], "Resolved", TestContext.Current.CancellationToken);
         Assert.Equal("Resolved", updated.Items![0].Status);
     }
+
+    [Fact]
+    public async Task UpdateGroupAsync_And_Counts_Deserialize()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "https://contoso.protect.jamfcloud.com/app")
+            .Respond(async request =>
+            {
+                var body = await request.Content!.ReadAsStringAsync();
+                if (body.Contains("updateGroup", StringComparison.Ordinal))
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("""{"data":{"updateGroup":{"id":"g1","name":"Fleet-2"}}}""", System.Text.Encoding.UTF8, "application/json"),
+                    };
+                }
+
+                if (body.Contains("getComputerCount", StringComparison.Ordinal))
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("""{"data":{"getComputerCount":{"computers":42}}}""", System.Text.Encoding.UTF8, "application/json"),
+                    };
+                }
+
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"data":{"getCount":{"computers":42,"alerts":7,"alertsComputers":5,"insightsComputers":3}}}""", System.Text.Encoding.UTF8, "application/json"),
+                };
+            });
+
+        using var http = mock.ToHttpClient();
+        using var client = new JamfProtectClient(http, new Uri("https://contoso.protect.jamfcloud.com/app"));
+
+        var group = await client.UpdateGroupAsync(
+            "g1",
+            new Models.ProtectGroupUpdateRequest { Name = "Fleet-2" },
+            TestContext.Current.CancellationToken);
+        Assert.Equal("Fleet-2", group!.Name);
+
+        var computers = await client.GetComputerCountAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(42, computers!.Computers);
+
+        var counts = await client.GetCountAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(42, counts!.Computers);
+        Assert.Equal(7, counts.Alerts);
+    }
+
+    [Fact]
+    public async Task CreatePlanAsync_Deserializes_Mutation()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "https://contoso.protect.jamfcloud.com/app")
+            .Respond(async request =>
+            {
+                var body = await request.Content!.ReadAsStringAsync();
+                Assert.Contains("createPlan", body, StringComparison.Ordinal);
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""
+                        {
+                          "data": {
+                            "createPlan": {
+                              "id": "p1",
+                              "uuid": "u1",
+                              "name": "Fleet",
+                              "description": "Default",
+                              "created": "2024-01-01T00:00:00Z",
+                              "updated": "2024-01-01T00:00:00Z",
+                              "profileVersion": 1
+                            }
+                          }
+                        }
+                        """, System.Text.Encoding.UTF8, "application/json"),
+                };
+            });
+
+        using var http = mock.ToHttpClient();
+        using var client = new JamfProtectClient(http, new Uri("https://contoso.protect.jamfcloud.com/app"));
+
+        var plan = await client.CreatePlanAsync(
+            new Models.ProtectPlanWriteRequest
+            {
+                Name = "Fleet",
+                Description = "Default",
+                ActionConfigsId = "ac1",
+            },
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("p1", plan.Id);
+        Assert.Equal("Fleet", plan.Name);
+    }
+
+    [Fact]
+    public async Task GraphQl_Errors_Throw_JamfApiException()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "https://contoso.protect.jamfcloud.com/app")
+            .Respond("application/json", """
+                {
+                  "errors": [
+                    { "message": "Not authorized" },
+                    { "message": "Missing field" }
+                  ]
+                }
+                """);
+
+        using var http = mock.ToHttpClient();
+        using var client = new JamfProtectClient(http, new Uri("https://contoso.protect.jamfcloud.com/app"));
+
+        var ex = await Assert.ThrowsAsync<JamfApiException>(
+            () => client.ListRolesAsync(cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Contains("Not authorized", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("Missing field", ex.Message, StringComparison.Ordinal);
+    }
 }

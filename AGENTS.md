@@ -53,16 +53,18 @@ Protect is hand-written against `graphql/jamf-protect.schema.graphql`. Add typed
 ## DX helpers (Core)
 
 - `JamfPagination` — cursor and page/page-size `IAsyncEnumerable` helpers
-- `JamfApiException.FromApiException` / `AsJamfApiAsync()` — unify Kiota errors
+- `JamfRsql` — lightweight RSQL filter builder for Pro `filter` parameters
+- `JamfApiException.FromApiException` / `AsJamfApiAsync()` / optional `RemapKiotaExceptions`
 - `JamfResilienceHandler` — 429/503 retries + one 401 token refresh
 - `AddJamf*Client(IConfiguration)` — appsettings binding via each options `SectionName`
+- Optional `OAuthScope` + token invalidate (Basic→bearer revoke when possible)
 
 ## Packaging
 
 - One `.nupkg` per product with `lib/net8.0` and `lib/net10.0`.
 - Package README lives under each `src/JamfDotNet.*/README.md`.
 - Native AOT / trimming is **not** claimed yet (reflection-based `System.Text.Json` + Kiota Generated). Document any future source-gen work in PRs.
-
+- Track user-facing changes in [CHANGELOG.md](CHANGELOG.md); target a `1.0.0` once Unreleased DX + Protect plan/computer surfaces and Platform smoke are stable.
 ## Build & test
 
 ```powershell

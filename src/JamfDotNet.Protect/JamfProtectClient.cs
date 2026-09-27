@@ -88,8 +88,7 @@ public sealed class JamfProtectClient : IDisposable
     public async Task<JsonDocument> ExecuteAsync(string query, object? variables = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
-        var payload = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
-        return JsonDocument.Parse(payload);
+        return await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Lists Protect RBAC roles.</summary>
@@ -149,9 +148,14 @@ public sealed class JamfProtectClient : IDisposable
     /// <summary>Lists Protect computers (devices).</summary>
     /// <param name="pageSize">Optional page size.</param>
     /// <param name="next">Optional pagination cursor.</param>
+    /// <param name="filter">Optional computer filters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Computer connection.</returns>
-    public Task<ProtectConnection<ProtectComputer>> ListComputersAsync(int? pageSize = null, string? next = null, CancellationToken cancellationToken = default)
+    public Task<ProtectConnection<ProtectComputer>> ListComputersAsync(
+        int? pageSize = null,
+        string? next = null,
+        ProtectComputerFilters? filter = null,
+        CancellationToken cancellationToken = default)
     {
         const string query = """
             query ListComputers($input: ComputerQueryInput) {
@@ -161,7 +165,11 @@ public sealed class JamfProtectClient : IDisposable
               }
             }
             """;
-        return QueryConnectionAsync<ProtectComputer>(query, "listComputers", new { input = new { pageSize, next } }, cancellationToken);
+        return QueryConnectionAsync<ProtectComputer>(
+            query,
+            "listComputers",
+            new { input = new { pageSize, next, filter = ToComputerFilterInput(filter) } },
+            cancellationToken);
     }
 
     /// <summary>Lists USB control sets.</summary>
@@ -203,9 +211,14 @@ public sealed class JamfProtectClient : IDisposable
     /// <summary>Lists alerts.</summary>
     /// <param name="pageSize">Optional page size.</param>
     /// <param name="next">Optional pagination cursor.</param>
+    /// <param name="filter">Optional alert filters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Alert connection.</returns>
-    public Task<ProtectConnection<ProtectAlert>> ListAlertsAsync(int? pageSize = null, string? next = null, CancellationToken cancellationToken = default)
+    public Task<ProtectConnection<ProtectAlert>> ListAlertsAsync(
+        int? pageSize = null,
+        string? next = null,
+        ProtectAlertFilters? filter = null,
+        CancellationToken cancellationToken = default)
     {
         const string query = """
             query ListAlerts($input: AlertQueryInput!) {
@@ -215,7 +228,11 @@ public sealed class JamfProtectClient : IDisposable
               }
             }
             """;
-        return QueryConnectionAsync<ProtectAlert>(query, "listAlerts", new { input = new { pageSize, next } }, cancellationToken);
+        return QueryConnectionAsync<ProtectAlert>(
+            query,
+            "listAlerts",
+            new { input = new { pageSize, next, filter = ToAlertFilterInput(filter) } },
+            cancellationToken);
     }
 
     /// <summary>Lists groups.</summary>
@@ -419,18 +436,1019 @@ public sealed class JamfProtectClient : IDisposable
         return QueryObjectAsync<ProtectGroup>(query, "deleteGroup", new { id }, cancellationToken);
     }
 
+    /// <summary>Gets a Protect group by id.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Group, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectGroup?> GetGroupAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            query GetGroup($id: ID!) {
+              getGroup(id: $id) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectGroup>(query, "getGroup", new { id }, cancellationToken);
+    }
+
+    /// <summary>Updates a Protect group.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated group.</returns>
+    public Task<ProtectGroup?> UpdateGroupAsync(string id, ProtectGroupUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdateGroup($id: ID!, $input: GroupUpdateInput!) {
+              updateGroup(id: $id, input: $input) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectGroup>(
+            query,
+            "updateGroup",
+            new
+            {
+                id,
+                input = new
+                {
+                    name = request.Name,
+                    accessGroup = request.AccessGroup,
+                    roleIds = request.RoleIds,
+                },
+            },
+            cancellationToken);
+    }
+
+    /// <summary>Gets a prevent list by id.</summary>
+    /// <param name="id">Prevent list id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Prevent list, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectPreventList?> GetPreventListAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            query GetPreventList($id: ID!) {
+              getPreventList(id: $id) {
+                id name description type count created
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectPreventList>(query, "getPreventList", new { id }, cancellationToken);
+    }
+
+    /// <summary>Creates a prevent list.</summary>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created prevent list.</returns>
+    public async Task<ProtectPreventList> CreatePreventListAsync(ProtectPreventListWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation CreatePreventList($input: PreventListInput!) {
+              createPreventList(input: $input) {
+                id name description type count created
+              }
+            }
+            """;
+        var created = await QueryObjectAsync<ProtectPreventList>(
+            query,
+            "createPreventList",
+            new { input = ToPreventListInput(request) },
+            cancellationToken).ConfigureAwait(false);
+        return created ?? throw new JamfApiException("Protect createPreventList returned no list.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Updates a prevent list.</summary>
+    /// <param name="id">Prevent list id.</param>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated prevent list.</returns>
+    public Task<ProtectPreventList?> UpdatePreventListAsync(string id, ProtectPreventListWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdatePreventList($id: ID!, $input: PreventListInput!) {
+              updatePreventList(id: $id, input: $input) {
+                id name description type count created
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectPreventList>(
+            query,
+            "updatePreventList",
+            new { id, input = ToPreventListInput(request) },
+            cancellationToken);
+    }
+
+    /// <summary>Deletes a prevent list.</summary>
+    /// <param name="id">Prevent list id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted prevent list summary when returned.</returns>
+    public Task<ProtectPreventList?> DeletePreventListAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            mutation DeletePreventList($id: ID!) {
+              deletePreventList(id: $id) {
+                id name description type count created
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectPreventList>(query, "deletePreventList", new { id }, cancellationToken);
+    }
+
+    /// <summary>Gets an action config by id.</summary>
+    /// <param name="id">Action config id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Action config, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectActionConfig?> GetActionConfigAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            query GetActionConfigs($id: ID!) {
+              getActionConfigs(id: $id) {
+                id name description created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectActionConfig>(query, "getActionConfigs", new { id }, cancellationToken);
+    }
+
+    /// <summary>Creates an action config (name/description).</summary>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created action config.</returns>
+    public async Task<ProtectActionConfig> CreateActionConfigAsync(ProtectActionConfigWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation CreateActionConfigs($input: ActionConfigsInput!) {
+              createActionConfigs(input: $input) {
+                id name description created updated
+              }
+            }
+            """;
+        var created = await QueryObjectAsync<ProtectActionConfig>(
+            query,
+            "createActionConfigs",
+            new { input = new { name = request.Name, description = request.Description } },
+            cancellationToken).ConfigureAwait(false);
+        return created ?? throw new JamfApiException("Protect createActionConfigs returned no config.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Updates an action config (name/description).</summary>
+    /// <param name="id">Action config id.</param>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated action config.</returns>
+    public Task<ProtectActionConfig?> UpdateActionConfigAsync(string id, ProtectActionConfigWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdateActionConfigs($id: ID!, $input: ActionConfigsInput!) {
+              updateActionConfigs(id: $id, input: $input) {
+                id name description created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectActionConfig>(
+            query,
+            "updateActionConfigs",
+            new { id, input = new { name = request.Name, description = request.Description } },
+            cancellationToken);
+    }
+
+    /// <summary>Deletes an action config.</summary>
+    /// <param name="id">Action config id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted action config summary when returned.</returns>
+    public Task<ProtectActionConfig?> DeleteActionConfigAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            mutation DeleteActionConfigs($id: ID!) {
+              deleteActionConfigs(id: $id) {
+                id name description created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectActionConfig>(query, "deleteActionConfigs", new { id }, cancellationToken);
+    }
+
+    /// <summary>Gets an analytic set by UUID.</summary>
+    /// <param name="uuid">Analytic set UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Analytic set, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectAnalyticSet?> GetAnalyticSetAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            query GetAnalyticSet($uuid: ID!) {
+              getAnalyticSet(uuid: $uuid) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectAnalyticSet>(query, "getAnalyticSet", new { uuid }, cancellationToken);
+    }
+
+    /// <summary>Creates an analytic set.</summary>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created analytic set.</returns>
+    public async Task<ProtectAnalyticSet> CreateAnalyticSetAsync(ProtectAnalyticSetWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation CreateAnalyticSet($input: AnalyticSetInput!) {
+              createAnalyticSet(input: $input) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        var created = await QueryObjectAsync<ProtectAnalyticSet>(
+            query,
+            "createAnalyticSet",
+            new { input = ToAnalyticSetInput(request) },
+            cancellationToken).ConfigureAwait(false);
+        return created ?? throw new JamfApiException("Protect createAnalyticSet returned no set.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Updates an analytic set.</summary>
+    /// <param name="uuid">Analytic set UUID.</param>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated analytic set.</returns>
+    public Task<ProtectAnalyticSet?> UpdateAnalyticSetAsync(string uuid, ProtectAnalyticSetWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdateAnalyticSet($uuid: ID!, $input: AnalyticSetInput!) {
+              updateAnalyticSet(uuid: $uuid, input: $input) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectAnalyticSet>(
+            query,
+            "updateAnalyticSet",
+            new { uuid, input = ToAnalyticSetInput(request) },
+            cancellationToken);
+    }
+
+    /// <summary>Deletes an analytic set.</summary>
+    /// <param name="uuid">Analytic set UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted analytic set summary when returned.</returns>
+    public Task<ProtectAnalyticSet?> DeleteAnalyticSetAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            mutation DeleteAnalyticSet($uuid: ID!) {
+              deleteAnalyticSet(uuid: $uuid) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectAnalyticSet>(query, "deleteAnalyticSet", new { uuid }, cancellationToken);
+    }
+
+    /// <summary>Gets an exception set by UUID.</summary>
+    /// <param name="uuid">Exception set UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Exception set, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectExceptionSet?> GetExceptionSetAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            query GetExceptionSet($uuid: ID!) {
+              getExceptionSet(uuid: $uuid) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectExceptionSet>(query, "getExceptionSet", new { uuid }, cancellationToken);
+    }
+
+    /// <summary>Creates an exception set.</summary>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created exception set.</returns>
+    public async Task<ProtectExceptionSet> CreateExceptionSetAsync(ProtectExceptionSetWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation CreateExceptionSet($input: ExceptionSetInput!) {
+              createExceptionSet(input: $input) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        var created = await QueryObjectAsync<ProtectExceptionSet>(
+            query,
+            "createExceptionSet",
+            new { input = ToExceptionSetInput(request) },
+            cancellationToken).ConfigureAwait(false);
+        return created ?? throw new JamfApiException("Protect createExceptionSet returned no set.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Updates an exception set.</summary>
+    /// <param name="uuid">Exception set UUID.</param>
+    /// <param name="request">Write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated exception set.</returns>
+    public Task<ProtectExceptionSet?> UpdateExceptionSetAsync(string uuid, ProtectExceptionSetWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdateExceptionSet($uuid: ID!, $input: ExceptionSetInput!) {
+              updateExceptionSet(uuid: $uuid, input: $input) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectExceptionSet>(
+            query,
+            "updateExceptionSet",
+            new { uuid, input = ToExceptionSetInput(request) },
+            cancellationToken);
+    }
+
+    /// <summary>Deletes an exception set.</summary>
+    /// <param name="uuid">Exception set UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted exception set summary when returned.</returns>
+    public Task<ProtectExceptionSet?> DeleteExceptionSetAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            mutation DeleteExceptionSet($uuid: ID!) {
+              deleteExceptionSet(uuid: $uuid) {
+                uuid name description created updated managed
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectExceptionSet>(query, "deleteExceptionSet", new { uuid }, cancellationToken);
+    }
+
+    /// <summary>Gets the Protect organization.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Organization summary, or <see langword="null"/> when absent.</returns>
+    public Task<ProtectOrganization?> GetOrganizationAsync(CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query GetOrganization {
+              getOrganization {
+                uuid configFreeze
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectOrganization>(query, "getOrganization", new { }, cancellationToken);
+    }
+
+    /// <summary>Updates organization configuration freeze.</summary>
+    /// <param name="configFreeze">Whether configuration freeze is enabled.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated organization.</returns>
+    public Task<ProtectOrganization?> UpdateOrganizationConfigFreezeAsync(
+        bool configFreeze,
+        CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            mutation UpdateOrganizationConfigFreeze($input: ConfigFreezeInput!) {
+              updateOrganizationConfigFreeze(input: $input) {
+                uuid configFreeze
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectOrganization>(
+            query,
+            "updateOrganizationConfigFreeze",
+            new { input = new { configFreeze } },
+            cancellationToken);
+    }
+
+    /// <summary>Gets a Protect role by id.</summary>
+    /// <param name="id">Role id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Role, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectRole?> GetRoleAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            query GetRole($id: ID!) {
+              getRole(id: $id) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectRole>(query, "getRole", new { id }, cancellationToken);
+    }
+
+    /// <summary>Creates a Protect role.</summary>
+    /// <param name="request">Role write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created role.</returns>
+    public async Task<ProtectRole> CreateRoleAsync(ProtectRoleWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation CreateRole($input: RoleInput!) {
+              createRole(input: $input) {
+                id name created updated
+              }
+            }
+            """;
+        var role = await QueryObjectAsync<ProtectRole>(
+            query,
+            "createRole",
+            new
+            {
+                input = new
+                {
+                    name = request.Name,
+                    readResources = request.ReadResources,
+                    writeResources = request.WriteResources,
+                },
+            },
+            cancellationToken).ConfigureAwait(false);
+        return role ?? throw new JamfApiException("Protect createRole returned no role.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Updates a Protect role.</summary>
+    /// <param name="id">Role id.</param>
+    /// <param name="request">Role write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated role.</returns>
+    public Task<ProtectRole?> UpdateRoleAsync(string id, ProtectRoleWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdateRole($id: ID!, $input: RoleInput!) {
+              updateRole(id: $id, input: $input) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectRole>(
+            query,
+            "updateRole",
+            new
+            {
+                id,
+                input = new
+                {
+                    name = request.Name,
+                    readResources = request.ReadResources,
+                    writeResources = request.WriteResources,
+                },
+            },
+            cancellationToken);
+    }
+
+    /// <summary>Deletes a Protect role.</summary>
+    /// <param name="id">Role id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted role summary when returned.</returns>
+    public Task<ProtectRole?> DeleteRoleAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            mutation DeleteRole($id: ID!) {
+              deleteRole(id: $id) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectRole>(query, "deleteRole", new { id }, cancellationToken);
+    }
+
+    /// <summary>Lists Protect users.</summary>
+    /// <param name="pageSize">Optional page size.</param>
+    /// <param name="next">Optional pagination cursor.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>User connection.</returns>
+    public Task<ProtectConnection<ProtectUser>> ListUsersAsync(
+        int? pageSize = null,
+        string? next = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query ListUsers($input: UserQueryInput) {
+              listUsers(input: $input) {
+                items { id email sub source receiveEmailAlert emailAlertMinSeverity lastLogin created updated }
+                pageInfo { next total }
+              }
+            }
+            """;
+        return QueryConnectionAsync<ProtectUser>(query, "listUsers", new { input = new { pageSize, next } }, cancellationToken);
+    }
+
+    /// <summary>Gets a Protect user by id.</summary>
+    /// <param name="id">User id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>User, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectUser?> GetUserAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            query GetUser($id: ID!) {
+              getUser(id: $id) {
+                id email sub source receiveEmailAlert emailAlertMinSeverity lastLogin created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectUser>(query, "getUser", new { id }, cancellationToken);
+    }
+
+    /// <summary>Creates a Protect user.</summary>
+    /// <param name="request">User create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created user.</returns>
+    public async Task<ProtectUser> CreateUserAsync(ProtectUserCreateRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation CreateUser($input: UserCreateInput!) {
+              createUser(input: $input) {
+                id email sub source receiveEmailAlert emailAlertMinSeverity lastLogin created updated
+              }
+            }
+            """;
+        var user = await QueryObjectAsync<ProtectUser>(
+            query,
+            "createUser",
+            new
+            {
+                input = new
+                {
+                    email = request.Email,
+                    connectionId = request.ConnectionId,
+                    roleIds = request.RoleIds,
+                    groupIds = request.GroupIds,
+                    receiveEmailAlert = request.ReceiveEmailAlert,
+                    emailAlertMinSeverity = request.EmailAlertMinSeverity,
+                },
+            },
+            cancellationToken).ConfigureAwait(false);
+        return user ?? throw new JamfApiException("Protect createUser returned no user.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Updates a Protect user.</summary>
+    /// <param name="id">User id.</param>
+    /// <param name="request">User update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated user.</returns>
+    public Task<ProtectUser?> UpdateUserAsync(string id, ProtectUserUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdateUser($id: ID!, $input: UserUpdateInput!) {
+              updateUser(id: $id, input: $input) {
+                id email sub source receiveEmailAlert emailAlertMinSeverity lastLogin created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectUser>(
+            query,
+            "updateUser",
+            new
+            {
+                id,
+                input = new
+                {
+                    roleIds = request.RoleIds,
+                    groupIds = request.GroupIds,
+                    receiveEmailAlert = request.ReceiveEmailAlert,
+                    emailAlertMinSeverity = request.EmailAlertMinSeverity,
+                },
+            },
+            cancellationToken);
+    }
+
+    /// <summary>Deletes a Protect user.</summary>
+    /// <param name="id">User id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted user summary when returned.</returns>
+    public Task<ProtectUser?> DeleteUserAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            mutation DeleteUser($id: ID!) {
+              deleteUser(id: $id) {
+                id email sub source receiveEmailAlert created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectUser>(query, "deleteUser", new { id }, cancellationToken);
+    }
+
+    /// <summary>Lists Protect insights.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Insight list.</returns>
+    public async Task<IReadOnlyList<ProtectInsight>> ListInsightsAsync(CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query ListInsights {
+              listInsights {
+                uuid label description section totalPass totalFail totalNone enabled
+              }
+            }
+            """;
+        using var document = await SendGraphQlAsync(query, variables: null, cancellationToken).ConfigureAwait(false);
+        if (!document.RootElement.TryGetProperty("data", out var data)
+            || !data.TryGetProperty("listInsights", out var element))
+        {
+            throw new JamfApiException(
+                "Protect GraphQL response did not include data.listInsights.",
+                System.Net.HttpStatusCode.OK,
+                document.RootElement.GetRawText());
+        }
+
+        if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
+        {
+            return Array.Empty<ProtectInsight>();
+        }
+
+        return element.Deserialize<List<ProtectInsight>>(JsonOptions) ?? [];
+    }
+
+    /// <summary>Lists Protect telemetry v2 configurations.</summary>
+    /// <param name="pageSize">Optional page size.</param>
+    /// <param name="next">Optional pagination cursor.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Telemetry connection.</returns>
+    public Task<ProtectConnection<ProtectTelemetryV2>> ListTelemetriesV2Async(
+        int? pageSize = null,
+        string? next = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query ListTelemetriesV2($input: TelemetryQueryInput) {
+              listTelemetriesV2(input: $input) {
+                items { id name description created updated }
+                pageInfo { next total }
+              }
+            }
+            """;
+        return QueryConnectionAsync<ProtectTelemetryV2>(query, "listTelemetriesV2", new { input = new { pageSize, next } }, cancellationToken);
+    }
+
+    /// <summary>Lists audit logs for a date range.</summary>
+    /// <param name="startDate">Inclusive start (UTC).</param>
+    /// <param name="endDate">Inclusive end (UTC).</param>
+    /// <param name="pageSize">Optional page size.</param>
+    /// <param name="next">Optional pagination cursor.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Audit log connection.</returns>
+    public Task<ProtectConnection<ProtectAuditLog>> ListAuditLogsByDateAsync(
+        DateTimeOffset startDate,
+        DateTimeOffset endDate,
+        int? pageSize = null,
+        string? next = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query ListAuditLogsByDate($input: AuditLogsDateQueryInput) {
+              listAuditLogsByDate(input: $input) {
+                items { date op user resourceId error ips }
+                pageInfo { next total }
+              }
+            }
+            """;
+        return QueryConnectionAsync<ProtectAuditLog>(
+            query,
+            "listAuditLogsByDate",
+            new
+            {
+                input = new
+                {
+                    next,
+                    pageSize,
+                    condition = new
+                    {
+                        dateRange = new
+                        {
+                            startDate,
+                            endDate,
+                        },
+                    },
+                },
+            },
+            cancellationToken);
+    }
+
+    /// <summary>Gets alert status counts.</summary>
+    /// <param name="filter">Optional alert filters.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Status count response.</returns>
+    public Task<ProtectAlertStatusCountResponse?> GetAlertStatusCountsAsync(
+        ProtectAlertFilters? filter = null,
+        CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query GetAlertStatusCounts($input: AlertFiltersInput) {
+              getAlertStatusCounts(input: $input) {
+                New InProgress Resolved AutoResolved
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectAlertStatusCountResponse>(
+            query,
+            "getAlertStatusCounts",
+            new { input = ToAlertFilterInput(filter) },
+            cancellationToken);
+    }
+
+    /// <summary>Gets a computer count for optional filters.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Computer count response.</returns>
+    public Task<ProtectComputerCountResponse?> GetComputerCountAsync(CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query GetComputerCount($input: ComputerCountQueryInput) {
+              getComputerCount(input: $input) {
+                computers
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectComputerCountResponse>(
+            query,
+            "getComputerCount",
+            new { input = new { } },
+            cancellationToken);
+    }
+
+    /// <summary>Gets aggregate counts for computers, alerts, and insights.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Count response.</returns>
+    public Task<ProtectCountResponse?> GetCountAsync(CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query GetCount($input: CountQueryInput) {
+              getCount(input: $input) {
+                computers alerts alertsComputers insightsComputers
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectCountResponse>(
+            query,
+            "getCount",
+            new { input = new { } },
+            cancellationToken);
+    }
+
+    /// <summary>Creates a Protect plan.</summary>
+    /// <param name="request">Plan write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created plan.</returns>
+    public async Task<ProtectPlan> CreatePlanAsync(ProtectPlanWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation CreatePlan($input: PlanInput!) {
+              createPlan(input: $input) {
+                id uuid name description created updated profileVersion
+              }
+            }
+            """;
+        var plan = await QueryObjectAsync<ProtectPlan>(
+            query,
+            "createPlan",
+            new { input = ToPlanInput(request) },
+            cancellationToken).ConfigureAwait(false);
+        return plan ?? throw new JamfApiException("Protect createPlan returned no plan.", System.Net.HttpStatusCode.OK);
+    }
+
+    /// <summary>Updates a Protect plan.</summary>
+    /// <param name="id">Plan id.</param>
+    /// <param name="request">Plan write payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated plan.</returns>
+    public Task<ProtectPlan?> UpdatePlanAsync(string id, ProtectPlanWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdatePlan($id: ID!, $input: PlanInput!) {
+              updatePlan(id: $id, input: $input) {
+                id uuid name description created updated profileVersion
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectPlan>(query, "updatePlan", new { id, input = ToPlanInput(request) }, cancellationToken);
+    }
+
+    /// <summary>Deletes a Protect plan.</summary>
+    /// <param name="id">Plan id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted plan summary when returned.</returns>
+    public Task<ProtectPlan?> DeletePlanAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            mutation DeletePlan($id: ID!) {
+              deletePlan(id: $id) {
+                id uuid name description created updated profileVersion
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectPlan>(query, "deletePlan", new { id }, cancellationToken);
+    }
+
+    /// <summary>Assigns a plan to a computer.</summary>
+    /// <param name="computerUuid">Computer UUID.</param>
+    /// <param name="planId">Plan id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated computer.</returns>
+    public Task<ProtectComputer?> SetComputerPlanAsync(
+        string computerUuid,
+        string planId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(computerUuid);
+        ArgumentException.ThrowIfNullOrWhiteSpace(planId);
+        const string query = """
+            mutation SetComputerPlan($uuid: ID!, $input: ComputerPlan!) {
+              setComputerPlan(uuid: $uuid, input: $input) {
+                uuid serial hostName osString version checkin created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectComputer>(
+            query,
+            "setComputerPlan",
+            new { uuid = computerUuid, input = new { plan = planId } },
+            cancellationToken);
+    }
+
+    /// <summary>Updates editable computer fields.</summary>
+    /// <param name="uuid">Computer UUID.</param>
+    /// <param name="label">Optional label.</param>
+    /// <param name="tags">Optional tags.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated computer.</returns>
+    public Task<ProtectComputer?> UpdateComputerAsync(
+        string uuid,
+        string? label = null,
+        IEnumerable<string>? tags = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            mutation UpdateComputer($uuid: ID!, $input: ComputerEditableInput!) {
+              updateComputer(uuid: $uuid, input: $input) {
+                uuid serial hostName osString version checkin created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectComputer>(
+            query,
+            "updateComputer",
+            new { uuid, input = new { label, tags } },
+            cancellationToken);
+    }
+
+    /// <summary>Deletes a Protect computer.</summary>
+    /// <param name="uuid">Computer UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Deleted computer summary when returned.</returns>
+    public Task<ProtectComputer?> DeleteComputerAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        const string query = """
+            mutation DeleteComputer($uuid: ID!) {
+              deleteComputer(uuid: $uuid) {
+                uuid serial hostName
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectComputer>(query, "deleteComputer", new { uuid }, cancellationToken);
+    }
+
+    private static object ToPlanInput(ProtectPlanWriteRequest request) => new
+    {
+        actionConfigs = request.ActionConfigsId,
+        description = request.Description,
+        name = request.Name,
+        logLevel = request.LogLevel,
+        exceptionSets = request.ExceptionSets,
+        telemetry = request.TelemetryId,
+        telemetryV2 = request.TelemetryV2Id,
+        autoUpdate = request.AutoUpdate,
+        usbControlSet = request.UsbControlSetId,
+        threatPreventionStrategy = request.ThreatPreventionStrategy,
+    };
+
+    private static object? ToAlertFilterInput(ProtectAlertFilters? filter)
+    {
+        if (filter is null)
+        {
+            return null;
+        }
+
+        object? status = string.IsNullOrWhiteSpace(filter.StatusEquals)
+            ? null
+            : new { equals = filter.StatusEquals };
+        object? severity = string.IsNullOrWhiteSpace(filter.SeverityEquals)
+            ? null
+            : new { equals = filter.SeverityEquals };
+        object? computerUuid = string.IsNullOrWhiteSpace(filter.ComputerUuidEquals)
+            ? null
+            : new { equals = filter.ComputerUuidEquals };
+        object? plan = string.IsNullOrWhiteSpace(filter.PlanIdEquals)
+            ? null
+            : new { equals = filter.PlanIdEquals };
+
+        if (status is null && severity is null && computerUuid is null && plan is null)
+        {
+            return null;
+        }
+
+        return new { status, severity, computerUuid, plan };
+    }
+
+    private static object? ToComputerFilterInput(ProtectComputerFilters? filter)
+    {
+        if (filter is null)
+        {
+            return null;
+        }
+
+        object? hostName = string.IsNullOrWhiteSpace(filter.HostNameEquals)
+            ? null
+            : new { equals = filter.HostNameEquals };
+        object? serial = string.IsNullOrWhiteSpace(filter.SerialEquals)
+            ? null
+            : new { equals = filter.SerialEquals };
+        object? plan = string.IsNullOrWhiteSpace(filter.PlanIdEquals)
+            ? null
+            : new { equals = filter.PlanIdEquals };
+
+        if (hostName is null && serial is null && plan is null)
+        {
+            return null;
+        }
+
+        return new { hostName, serial, plan };
+    }
+
+    private static object ToPreventListInput(ProtectPreventListWriteRequest request) => new
+    {
+        name = request.Name,
+        type = request.Type,
+        list = request.List,
+        tags = request.Tags,
+        description = request.Description,
+    };
+
+    private static object ToAnalyticSetInput(ProtectAnalyticSetWriteRequest request) => new
+    {
+        name = request.Name,
+        description = request.Description,
+        analytics = request.AnalyticIds,
+        types = request.Types,
+    };
+
+    private static object ToExceptionSetInput(ProtectExceptionSetWriteRequest request) => new
+    {
+        name = request.Name,
+        description = request.Description,
+        exceptions = request.Exceptions.Select(e => new
+        {
+            type = e.Type,
+            ignoreActivity = e.IgnoreActivity,
+            value = e.Value,
+            analyticUuid = e.AnalyticUuid,
+        }).ToArray(),
+    };
+
     private async Task<ProtectConnection<T>> QueryConnectionAsync<T>(
         string query,
         string fieldName,
         object variables,
         CancellationToken cancellationToken)
     {
-        var json = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
-        using var document = JsonDocument.Parse(json);
+        using var document = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
         if (!document.RootElement.TryGetProperty("data", out var data)
             || !data.TryGetProperty(fieldName, out var connectionElement))
         {
-            throw new JamfApiException($"Protect GraphQL response did not include data.{fieldName}.", System.Net.HttpStatusCode.OK, json);
+            throw new JamfApiException(
+                $"Protect GraphQL response did not include data.{fieldName}.",
+                System.Net.HttpStatusCode.OK,
+                document.RootElement.GetRawText());
         }
 
         var connection = connectionElement.Deserialize<ProtectConnection<T>>(JsonOptions)
@@ -445,12 +1463,14 @@ public sealed class JamfProtectClient : IDisposable
         CancellationToken cancellationToken)
         where T : class
     {
-        var json = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
-        using var document = JsonDocument.Parse(json);
+        using var document = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
         if (!document.RootElement.TryGetProperty("data", out var data)
             || !data.TryGetProperty(fieldName, out var element))
         {
-            throw new JamfApiException($"Protect GraphQL response did not include data.{fieldName}.", System.Net.HttpStatusCode.OK, json);
+            throw new JamfApiException(
+                $"Protect GraphQL response did not include data.{fieldName}.",
+                System.Net.HttpStatusCode.OK,
+                document.RootElement.GetRawText());
         }
 
         if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
@@ -461,30 +1481,41 @@ public sealed class JamfProtectClient : IDisposable
         return element.Deserialize<T>(JsonOptions);
     }
 
-    private async Task<string> SendGraphQlAsync(string query, object? variables, CancellationToken cancellationToken)
+    /// <summary>
+    /// Posts a GraphQL document, validates HTTP + top-level <c>errors</c>, and returns a single parsed document.
+    /// Caller owns disposal.
+    /// </summary>
+    private async Task<JsonDocument> SendGraphQlAsync(string query, object? variables, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, _graphQlEndpoint);
         request.Content = JsonContent.Create(new GraphQlRequest(query, variables), options: JsonOptions);
 
         using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+
         if (!response.IsSuccessStatusCode)
         {
-            throw new JamfApiException(
-                $"Protect GraphQL request failed with status {(int)response.StatusCode}.",
-                response.StatusCode,
-                body);
+            using (document)
+            {
+                throw JamfApiException.FromHttpResponse(
+                    $"Protect GraphQL request failed with status {(int)response.StatusCode}.",
+                    response,
+                    document.RootElement.GetRawText());
+            }
         }
 
-        using var document = JsonDocument.Parse(body);
         if (document.RootElement.TryGetProperty("errors", out var errors)
             && errors.ValueKind == JsonValueKind.Array
             && errors.GetArrayLength() > 0)
         {
-            throw new JamfApiException("Protect GraphQL response contained errors.", response.StatusCode, body);
+            using (document)
+            {
+                throw JamfApiException.FromGraphQlErrors(document.RootElement.GetRawText(), response.StatusCode);
+            }
         }
 
-        return body;
+        return document;
     }
 
     /// <inheritdoc />

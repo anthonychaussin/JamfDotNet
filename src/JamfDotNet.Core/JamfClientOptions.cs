@@ -32,6 +32,18 @@ public sealed class JamfClientOptions
     public string? ClientSecret { get; set; }
 
     /// <summary>
+    /// Optional space-delimited OAuth2 scope listing a subset of the API client's roles.
+    /// When omitted, Jamf grants all roles configured on the API client.
+    /// </summary>
+    public string? OAuthScope { get; set; }
+
+    /// <summary>
+    /// When <see langword="true"/>, Kiota <c>ApiException</c> failures are remapped to
+    /// <see cref="JamfApiException"/> automatically for Pro and Classic clients created from these options.
+    /// </summary>
+    public bool RemapKiotaExceptions { get; set; }
+
+    /// <summary>
     /// Username when using <see cref="JamfAuthenticationMode.BasicToken"/>.
     /// </summary>
     public string? Username { get; set; }

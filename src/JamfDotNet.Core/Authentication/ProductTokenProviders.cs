@@ -7,11 +7,63 @@ using Microsoft.Extensions.Options;
 namespace JamfDotNet.Core.Authentication;
 
 /// <summary>
+/// Shared client-credentials OAuth token acquisition with in-memory cache.
+/// </summary>
+internal static class JamfOAuthClientCredentials
+{
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
+    /// <summary>
+    /// POSTs form-urlencoded credentials and returns access token + absolute expiry.
+    /// </summary>
+    public static async Task<(string AccessToken, DateTimeOffset ExpiresAt)> AcquireAsync(
+        HttpClient httpClient,
+        Uri tokenEndpoint,
+        IEnumerable<KeyValuePair<string, string>> formFields,
+        string productLabel,
+        CancellationToken cancellationToken)
+    {
+        using var content = new FormUrlEncodedContent(formFields);
+        using var request = new HttpRequestMessage(HttpMethod.Post, tokenEndpoint) { Content = content };
+        using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new JamfApiException(
+                $"Failed to acquire {productLabel} OAuth token from {tokenEndpoint}. Status {(int)response.StatusCode}.",
+                response.StatusCode,
+                body);
+        }
+
+        var token = JsonSerializer.Deserialize<OAuthTokenResponse>(body, JsonOptions)
+            ?? throw new JamfApiException($"{productLabel} OAuth token response was empty.", response.StatusCode, body);
+        if (string.IsNullOrWhiteSpace(token.AccessToken))
+        {
+            throw new JamfApiException(
+                $"{productLabel} OAuth token response did not include access_token.",
+                response.StatusCode,
+                body);
+        }
+
+        var expiresAt = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn is > 0 ? token.ExpiresIn.Value : 1800);
+        return (token.AccessToken, expiresAt);
+    }
+
+    private sealed class OAuthTokenResponse
+    {
+        [JsonPropertyName("access_token")]
+        public string? AccessToken { get; set; }
+
+        [JsonPropertyName("expires_in")]
+        public int? ExpiresIn { get; set; }
+    }
+}
+
+/// <summary>
 /// Obtains OAuth2 access tokens from the Jamf Platform API Gateway.
 /// </summary>
 public sealed class JamfPlatformTokenProvider : IJamfTokenProvider
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly HttpClient _httpClient;
     private readonly JamfPlatformOptions _options;
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -19,6 +71,8 @@ public sealed class JamfPlatformTokenProvider : IJamfTokenProvider
     private DateTimeOffset _expiresAt = DateTimeOffset.MinValue;
 
     /// <summary>Creates a new <see cref="JamfPlatformTokenProvider"/>.</summary>
+    /// <param name="httpClient">HTTP client used for token requests.</param>
+    /// <param name="options">Platform options.</param>
     public JamfPlatformTokenProvider(HttpClient httpClient, IOptions<JamfPlatformOptions> options)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
@@ -42,33 +96,18 @@ public sealed class JamfPlatformTokenProvider : IJamfTokenProvider
                 return _accessToken!;
             }
 
-            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                ["grant_type"] = "client_credentials",
-                ["client_id"] = _options.ClientId,
-                ["client_secret"] = _options.ClientSecret,
-            });
-            using var request = new HttpRequestMessage(HttpMethod.Post, _options.TokenEndpoint) { Content = content };
-            using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new JamfApiException(
-                    $"Failed to acquire Platform OAuth token from {_options.TokenEndpoint}. Status {(int)response.StatusCode}.",
-                    response.StatusCode,
-                    body);
-            }
-
-            var token = JsonSerializer.Deserialize<OAuthTokenResponse>(body, JsonOptions)
-                ?? throw new JamfApiException("Platform OAuth token response was empty.", response.StatusCode, body);
-            if (string.IsNullOrWhiteSpace(token.AccessToken))
-            {
-                throw new JamfApiException("Platform OAuth token response did not include access_token.", response.StatusCode, body);
-            }
-
-            _accessToken = token.AccessToken;
-            _expiresAt = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn is > 0 ? token.ExpiresIn.Value : 1800);
-            return _accessToken;
+            (_accessToken, _expiresAt) = await JamfOAuthClientCredentials.AcquireAsync(
+                _httpClient,
+                _options.TokenEndpoint,
+                new Dictionary<string, string>
+                {
+                    ["grant_type"] = "client_credentials",
+                    ["client_id"] = _options.ClientId,
+                    ["client_secret"] = _options.ClientSecret,
+                },
+                "Platform",
+                cancellationToken).ConfigureAwait(false);
+            return _accessToken!;
         }
         finally
         {
@@ -94,15 +133,6 @@ public sealed class JamfPlatformTokenProvider : IJamfTokenProvider
     private bool HasValidCachedToken() =>
         !string.IsNullOrEmpty(_accessToken)
         && DateTimeOffset.UtcNow < _expiresAt.AddSeconds(-_options.TokenRefreshSkewSeconds);
-
-    private sealed class OAuthTokenResponse
-    {
-        [JsonPropertyName("access_token")]
-        public string? AccessToken { get; set; }
-
-        [JsonPropertyName("expires_in")]
-        public int? ExpiresIn { get; set; }
-    }
 }
 
 /// <summary>
@@ -110,7 +140,6 @@ public sealed class JamfPlatformTokenProvider : IJamfTokenProvider
 /// </summary>
 public sealed class JamfProtectTokenProvider : IJamfTokenProvider
 {
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly HttpClient _httpClient;
     private readonly JamfProtectOptions _options;
     private readonly SemaphoreSlim _gate = new(1, 1);
@@ -118,6 +147,8 @@ public sealed class JamfProtectTokenProvider : IJamfTokenProvider
     private DateTimeOffset _expiresAt = DateTimeOffset.MinValue;
 
     /// <summary>Creates a new <see cref="JamfProtectTokenProvider"/>.</summary>
+    /// <param name="httpClient">HTTP client used for token requests.</param>
+    /// <param name="options">Protect options.</param>
     public JamfProtectTokenProvider(HttpClient httpClient, IOptions<JamfProtectOptions> options)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
@@ -141,32 +172,18 @@ public sealed class JamfProtectTokenProvider : IJamfTokenProvider
                 return _accessToken!;
             }
 
-            using var content = new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                ["client_id"] = _options.ClientId,
-                ["password"] = _options.ClientSecret,
-            });
-            using var request = new HttpRequestMessage(HttpMethod.Post, _options.TokenEndpoint) { Content = content };
-            using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new JamfApiException(
-                    $"Failed to acquire Protect OAuth token from {_options.TokenEndpoint}. Status {(int)response.StatusCode}.",
-                    response.StatusCode,
-                    body);
-            }
-
-            var token = JsonSerializer.Deserialize<OAuthTokenResponse>(body, JsonOptions)
-                ?? throw new JamfApiException("Protect OAuth token response was empty.", response.StatusCode, body);
-            if (string.IsNullOrWhiteSpace(token.AccessToken))
-            {
-                throw new JamfApiException("Protect OAuth token response did not include access_token.", response.StatusCode, body);
-            }
-
-            _accessToken = token.AccessToken;
-            _expiresAt = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn is > 0 ? token.ExpiresIn.Value : 1800);
-            return _accessToken;
+            // Protect uses client_id + password (not standard client_secret grant).
+            (_accessToken, _expiresAt) = await JamfOAuthClientCredentials.AcquireAsync(
+                _httpClient,
+                _options.TokenEndpoint,
+                new Dictionary<string, string>
+                {
+                    ["client_id"] = _options.ClientId,
+                    ["password"] = _options.ClientSecret,
+                },
+                "Protect",
+                cancellationToken).ConfigureAwait(false);
+            return _accessToken!;
         }
         finally
         {
@@ -192,15 +209,6 @@ public sealed class JamfProtectTokenProvider : IJamfTokenProvider
     private bool HasValidCachedToken() =>
         !string.IsNullOrEmpty(_accessToken)
         && DateTimeOffset.UtcNow < _expiresAt.AddSeconds(-_options.TokenRefreshSkewSeconds);
-
-    private sealed class OAuthTokenResponse
-    {
-        [JsonPropertyName("access_token")]
-        public string? AccessToken { get; set; }
-
-        [JsonPropertyName("expires_in")]
-        public int? ExpiresIn { get; set; }
-    }
 }
 
 /// <summary>
@@ -215,6 +223,8 @@ public sealed class JamfTitleEditorTokenProvider : IJamfTokenProvider
     private DateTimeOffset _expiresAt = DateTimeOffset.MinValue;
 
     /// <summary>Creates a new <see cref="JamfTitleEditorTokenProvider"/>.</summary>
+    /// <param name="httpClient">HTTP client used for token requests.</param>
+    /// <param name="options">Title Editor options.</param>
     public JamfTitleEditorTokenProvider(HttpClient httpClient, IOptions<JamfTitleEditorOptions> options)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));

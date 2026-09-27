@@ -24,6 +24,12 @@ public sealed class JamfTitleEditorOptions
     /// <summary>Seconds before expiry to refresh the token.</summary>
     public int TokenRefreshSkewSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// When <see langword="true"/>, Kiota <c>ApiException</c> failures are remapped to
+    /// <see cref="JamfApiException"/> automatically for Title Editor clients created from these options.
+    /// </summary>
+    public bool RemapKiotaExceptions { get; set; }
+
     /// <summary>API base (<c>{BaseUrl}/v2/</c>).</summary>
     public Uri ApiBaseUrl => new(Combine(BaseUrl, "v2/"));
 

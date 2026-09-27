@@ -9,6 +9,7 @@
     <Project Path="src/JamfDotNet.TitleEditor/JamfDotNet.TitleEditor.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/JamfDotNet.Core.Tests/JamfDotNet.Core.Tests.csproj" />
     <Project Path="tests/JamfDotNet.Pro.Tests/JamfDotNet.Pro.Tests.csproj" />
     <Project Path="tests/JamfDotNet.Classic.Tests/JamfDotNet.Classic.Tests.csproj" />
     <Project Path="tests/JamfDotNet.Platform.Tests/JamfDotNet.Platform.Tests.csproj" />

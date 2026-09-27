@@ -58,6 +58,7 @@ public static class JamfTitleEditorServiceCollectionExtensions
         string? sectionName = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        services.ConfigureJamfResilience(configuration);
         return services.AddJamfTitleEditorClient(configuration.GetSection(sectionName ?? JamfTitleEditorOptions.SectionName));
     }
 

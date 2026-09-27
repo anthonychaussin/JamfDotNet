@@ -312,3 +312,84 @@ public sealed class SchoolLocationResponse : SchoolApiResponse
     /// <summary>Location payload.</summary>
     public SchoolLocation? Location { get; set; }
 }
+
+/// <summary>Payload used to create or update a School user group.</summary>
+public sealed class SchoolUserGroupWriteRequest
+{
+    /// <summary>Group name.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Description.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Additional properties forwarded as-is.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+}
+
+/// <summary>Payload used to create or update a School device group.</summary>
+public sealed class SchoolDeviceGroupWriteRequest
+{
+    /// <summary>Group name.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Description.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Additional properties forwarded as-is.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+}
+
+/// <summary>Payload used to create or update a School class.</summary>
+public sealed class SchoolClassWriteRequest
+{
+    /// <summary>Class name.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Description.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Additional properties forwarded as-is.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+}
+
+/// <summary>Payload used to create or update a School profile.</summary>
+public sealed class SchoolProfileWriteRequest
+{
+    /// <summary>Profile name.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Description.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Additional properties forwarded as-is.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+}
+
+/// <summary>Payload used to create or update a School app.</summary>
+public sealed class SchoolAppWriteRequest
+{
+    /// <summary>App name.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Bundle identifier.</summary>
+    public string? BundleId { get; set; }
+
+    /// <summary>Additional properties forwarded as-is.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+}
+
+/// <summary>Payload used to create or update a School location.</summary>
+public sealed class SchoolLocationWriteRequest
+{
+    /// <summary>Location name.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Additional properties forwarded as-is.</summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
+}

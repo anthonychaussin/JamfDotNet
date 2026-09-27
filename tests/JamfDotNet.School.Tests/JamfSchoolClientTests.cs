@@ -59,6 +59,31 @@ public sealed class JamfSchoolClientTests
     }
 
     [Fact]
+    public async Task EnumerateDevicesAsync_Yields_List_Items()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "https://contoso.jamfcloud.com/api/devices")
+            .Respond("application/json", """{ "code": 200, "devices": [ { "UDID": "a", "name": "One" }, { "UDID": "b", "name": "Two" } ] }""");
+
+        var options = new JamfSchoolOptions
+        {
+            BaseUrl = new Uri("https://contoso.jamfcloud.com"),
+            NetworkId = "network",
+            ApiKey = "key",
+        };
+        using var http = mock.ToHttpClient();
+        using var client = JamfSchoolClient.Create(options, http);
+
+        var names = new List<string>();
+        await foreach (var device in client.EnumerateDevicesAsync(TestContext.Current.CancellationToken))
+        {
+            names.Add(device.Name!);
+        }
+
+        Assert.Equal(["One", "Two"], names);
+    }
+
+    [Fact]
     public async Task Devices_RestartAsync_Posts_Command()
     {
         var mock = new MockHttpMessageHandler();
@@ -74,6 +99,25 @@ public sealed class JamfSchoolClientTests
         using var http = mock.ToHttpClient();
         using var client = JamfSchoolClient.Create(options, http);
         await client.Devices.RestartAsync("abc", TestContext.Current.CancellationToken);
+        mock.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
+    public async Task Devices_ShutdownAsync_Posts_Command()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.Expect(HttpMethod.Post, "https://contoso.jamfcloud.com/api/devices/abc/shutdown")
+            .Respond(System.Net.HttpStatusCode.NoContent);
+
+        var options = new JamfSchoolOptions
+        {
+            BaseUrl = new Uri("https://contoso.jamfcloud.com"),
+            NetworkId = "network",
+            ApiKey = "key",
+        };
+        using var http = mock.ToHttpClient();
+        using var client = JamfSchoolClient.Create(options, http);
+        await client.Devices.ShutdownAsync("abc", TestContext.Current.CancellationToken);
         mock.VerifyNoOutstandingExpectation();
     }
 

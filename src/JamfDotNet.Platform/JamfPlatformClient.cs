@@ -1,5 +1,6 @@
 using JamfDotNet.Core;
 using JamfDotNet.Core.Authentication;
+using JamfDotNet.Core.Kiota;
 using JamfDotNet.Platform.Generated.AppInstallerDeployments;
 using JamfDotNet.Platform.Generated.AppInstallerSettings;
 using JamfDotNet.Platform.Generated.AppInstallerTitles;
@@ -122,10 +123,11 @@ public sealed class JamfPlatformClient : IDisposable
 
         TClient CreateServiceClient<TClient>(string servicePath, Func<IRequestAdapter, TClient> factory)
         {
-            var adapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClient)
+            IRequestAdapter adapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClient)
             {
                 BaseUrl = options.GetServiceBaseUrl(servicePath).AbsoluteUri.TrimEnd('/'),
             };
+            adapter = JamfRemappingRequestAdapter.MaybeWrap(adapter, options.RemapKiotaExceptions);
             return factory(adapter);
         }
 
