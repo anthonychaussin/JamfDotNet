@@ -147,11 +147,17 @@ var list = await titles.Api.Softwaretitles.GetAsync();
 
 ## Pagination, errors, and resilience
 
-- **Pagination:** `JamfPagination` in Core; Protect `Enumerate*Async`; Pro `EnumerateComputersInventoryAsync`.
-- **Errors:** School / Protect throw `JamfApiException`. Kiota calls can be remapped with `.AsJamfApiAsync()` (`JamfKiotaExceptionExtensions`).
+- **Pagination:** `JamfPagination` in Core; Protect `Enumerate*Async`; Pro helpers (`EnumerateComputersInventoryAsync`, mobile devices, scripts, packages, users, categories); Platform `EnumerateDevicesAsync` / `EnumerateDeviceGroupsAsync` / `EnumerateBlueprintsAsync`.
+- **RSQL filters:** `JamfRsql` in Core (`Eq`, `And`, `In`, …) for Pro `filter` query strings.
+- **Errors:** School / Protect throw `JamfApiException`. Kiota calls can use `.AsJamfApiAsync()` or set `JamfClientOptions.RemapKiotaExceptions = true` for Pro/Classic.
+- **Auth extras:** optional `OAuthScope`; `IJamfTokenProvider.InvalidateAsync` (Basic→bearer also calls invalidate-token).
 - **Resilience:** Named HTTP clients retry **429** / **503** and refresh bearer tokens once after **401** (when a token provider is registered).
 - **Configuration:** every `AddJamf*Client` overload accepts `IConfiguration` / `IConfigurationSection` (see each options `SectionName`).
+- **Native AOT / trimming:** not claimed yet (reflection JSON + Kiota Generated). See [CHANGELOG.md](CHANGELOG.md) and [AGENTS.md](AGENTS.md).
 
+## Roadmap toward 1.0
+
+See [CHANGELOG.md](CHANGELOG.md) `[Unreleased]`. Stabilization goals before `1.0.0`: keep Pro DX helpers + Protect plan/computer APIs stable, run Platform live smoke in CI when secrets are configured, and avoid claiming AOT until source-gen work lands.
 ## OpenAPI & code generation
 
 Clients are generated with [Kiota](https://learn.microsoft.com/openapi/kiota/) where OpenAPI is available.

@@ -1,6 +1,8 @@
 using JamfDotNet.Classic.Generated;
 using JamfDotNet.Core;
+using JamfDotNet.Core.Kiota;
 using Microsoft.Extensions.Options;
+using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
 
@@ -53,10 +55,11 @@ public sealed class JamfClassicClient : IDisposable
 
         var ownsClient = httpClient is null;
         httpClient ??= new HttpClient();
-        var adapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClient)
+        IRequestAdapter adapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClient)
         {
             BaseUrl = options.ClassicApiBaseUrl.AbsoluteUri.TrimEnd('/'),
         };
+        adapter = JamfRemappingRequestAdapter.MaybeWrap(adapter, options.RemapKiotaExceptions);
 
         return new JamfClassicClient(new JamfClassicApiClient(adapter), ownsClient ? httpClient : null);
     }

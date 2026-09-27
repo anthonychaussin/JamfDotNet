@@ -320,6 +320,56 @@ public sealed class SchoolDevicesResource
     public Task ClearPasscodeAsync(string udid, CancellationToken cancellationToken = default) =>
         SendDeviceCommandAsync(udid, "clearpasscode", cancellationToken);
 
+    /// <summary>Shuts down a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task ShutdownAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "shutdown", cancellationToken);
+
+    /// <summary>Sends a blank push (check-in nudge) to a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task BlankPushAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "blankpush", cancellationToken);
+
+    /// <summary>Updates inventory for a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task UpdateInventoryAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "updateinventory", cancellationToken);
+
+    /// <summary>Enables lost mode on a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task EnableLostModeAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "lostmode", cancellationToken);
+
+    /// <summary>Disables lost mode on a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DisableLostModeAsync(string udid, CancellationToken cancellationToken = default) =>
+        SendDeviceCommandAsync(udid, "disablelostmode", cancellationToken);
+
+    /// <summary>Sends an arbitrary MDM command path segment for a device.</summary>
+    /// <param name="udid">Device UDID.</param>
+    /// <param name="command">Command path segment under <c>/devices/{udid}/</c>.</param>
+    /// <param name="body">Optional JSON body.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task SendCommandAsync(
+        string udid,
+        string command,
+        object? body = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(udid);
+        ArgumentException.ThrowIfNullOrWhiteSpace(command);
+        return _client.SendNoContentAsync(
+            HttpMethod.Post,
+            $"devices/{Uri.EscapeDataString(udid)}/{command.Trim('/')}",
+            body,
+            cancellationToken);
+    }
+
     private Task SendDeviceCommandAsync(string udid, string command, CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(udid);
@@ -346,6 +396,33 @@ public sealed class SchoolDeviceGroupsResource
     /// <returns>Device group envelope.</returns>
     public Task<SchoolDeviceGroupResponse> GetAsync(int id, CancellationToken cancellationToken = default) =>
         _client.GetAsync<SchoolDeviceGroupResponse>($"devices/groups/{id}", cancellationToken);
+
+    /// <summary>Creates a device group.</summary>
+    /// <param name="request">Create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created device group envelope.</returns>
+    public Task<SchoolDeviceGroupResponse> CreateAsync(SchoolDeviceGroupWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolDeviceGroupResponse>(HttpMethod.Post, "devices/groups", request, cancellationToken);
+    }
+
+    /// <summary>Updates a device group.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated device group envelope.</returns>
+    public Task<SchoolDeviceGroupResponse> UpdateAsync(int id, SchoolDeviceGroupWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolDeviceGroupResponse>(HttpMethod.Put, $"devices/groups/{id}", request, cancellationToken);
+    }
+
+    /// <summary>Deletes a device group.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default) =>
+        _client.SendNoContentAsync(HttpMethod.Delete, $"devices/groups/{id}", body: null, cancellationToken);
 }
 
 /// <summary>Users resource.</summary>
@@ -415,6 +492,33 @@ public sealed class SchoolUserGroupsResource
     /// <returns>User group envelope.</returns>
     public Task<SchoolUserGroupResponse> GetAsync(int id, CancellationToken cancellationToken = default) =>
         _client.GetAsync<SchoolUserGroupResponse>($"users/groups/{id}", cancellationToken);
+
+    /// <summary>Creates a user group.</summary>
+    /// <param name="request">Create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created user group envelope.</returns>
+    public Task<SchoolUserGroupResponse> CreateAsync(SchoolUserGroupWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolUserGroupResponse>(HttpMethod.Post, "users/groups", request, cancellationToken);
+    }
+
+    /// <summary>Updates a user group.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated user group envelope.</returns>
+    public Task<SchoolUserGroupResponse> UpdateAsync(int id, SchoolUserGroupWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolUserGroupResponse>(HttpMethod.Put, $"users/groups/{id}", request, cancellationToken);
+    }
+
+    /// <summary>Deletes a user group.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default) =>
+        _client.SendNoContentAsync(HttpMethod.Delete, $"users/groups/{id}", body: null, cancellationToken);
 }
 
 /// <summary>Classes resource.</summary>
@@ -436,6 +540,37 @@ public sealed class SchoolClassesResource
     /// <returns>Class envelope.</returns>
     public Task<SchoolClassResponse> GetAsync(string uuid, CancellationToken cancellationToken = default) =>
         _client.GetAsync<SchoolClassResponse>($"classes/{Uri.EscapeDataString(uuid)}", cancellationToken);
+
+    /// <summary>Creates a class.</summary>
+    /// <param name="request">Create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created class envelope.</returns>
+    public Task<SchoolClassResponse> CreateAsync(SchoolClassWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolClassResponse>(HttpMethod.Post, "classes", request, cancellationToken);
+    }
+
+    /// <summary>Updates a class.</summary>
+    /// <param name="uuid">Class UUID.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated class envelope.</returns>
+    public Task<SchoolClassResponse> UpdateAsync(string uuid, SchoolClassWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolClassResponse>(HttpMethod.Put, $"classes/{Uri.EscapeDataString(uuid)}", request, cancellationToken);
+    }
+
+    /// <summary>Deletes a class.</summary>
+    /// <param name="uuid">Class UUID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DeleteAsync(string uuid, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(uuid);
+        return _client.SendNoContentAsync(HttpMethod.Delete, $"classes/{Uri.EscapeDataString(uuid)}", body: null, cancellationToken);
+    }
 }
 
 /// <summary>Profiles resource.</summary>
@@ -457,6 +592,33 @@ public sealed class SchoolProfilesResource
     /// <returns>Profile envelope.</returns>
     public Task<SchoolProfileResponse> GetAsync(int id, CancellationToken cancellationToken = default) =>
         _client.GetAsync<SchoolProfileResponse>($"profiles/{id}", cancellationToken);
+
+    /// <summary>Creates a profile.</summary>
+    /// <param name="request">Create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created profile envelope.</returns>
+    public Task<SchoolProfileResponse> CreateAsync(SchoolProfileWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolProfileResponse>(HttpMethod.Post, "profiles", request, cancellationToken);
+    }
+
+    /// <summary>Updates a profile.</summary>
+    /// <param name="id">Profile id.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated profile envelope.</returns>
+    public Task<SchoolProfileResponse> UpdateAsync(int id, SchoolProfileWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolProfileResponse>(HttpMethod.Put, $"profiles/{id}", request, cancellationToken);
+    }
+
+    /// <summary>Deletes a profile.</summary>
+    /// <param name="id">Profile id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default) =>
+        _client.SendNoContentAsync(HttpMethod.Delete, $"profiles/{id}", body: null, cancellationToken);
 }
 
 /// <summary>Apps resource.</summary>
@@ -478,6 +640,33 @@ public sealed class SchoolAppsResource
     /// <returns>App envelope.</returns>
     public Task<SchoolAppResponse> GetAsync(int id, CancellationToken cancellationToken = default) =>
         _client.GetAsync<SchoolAppResponse>($"apps/{id}", cancellationToken);
+
+    /// <summary>Creates an app.</summary>
+    /// <param name="request">Create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created app envelope.</returns>
+    public Task<SchoolAppResponse> CreateAsync(SchoolAppWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolAppResponse>(HttpMethod.Post, "apps", request, cancellationToken);
+    }
+
+    /// <summary>Updates an app.</summary>
+    /// <param name="id">App id.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated app envelope.</returns>
+    public Task<SchoolAppResponse> UpdateAsync(int id, SchoolAppWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolAppResponse>(HttpMethod.Put, $"apps/{id}", request, cancellationToken);
+    }
+
+    /// <summary>Deletes an app.</summary>
+    /// <param name="id">App id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default) =>
+        _client.SendNoContentAsync(HttpMethod.Delete, $"apps/{id}", body: null, cancellationToken);
 }
 
 /// <summary>Locations resource.</summary>
@@ -499,4 +688,31 @@ public sealed class SchoolLocationsResource
     /// <returns>Location envelope.</returns>
     public Task<SchoolLocationResponse> GetAsync(int id, CancellationToken cancellationToken = default) =>
         _client.GetAsync<SchoolLocationResponse>($"locations/{id}", cancellationToken);
+
+    /// <summary>Creates a location.</summary>
+    /// <param name="request">Create payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Created location envelope.</returns>
+    public Task<SchoolLocationResponse> CreateAsync(SchoolLocationWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolLocationResponse>(HttpMethod.Post, "locations", request, cancellationToken);
+    }
+
+    /// <summary>Updates a location.</summary>
+    /// <param name="id">Location id.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated location envelope.</returns>
+    public Task<SchoolLocationResponse> UpdateAsync(int id, SchoolLocationWriteRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return _client.SendJsonAsync<SchoolLocationResponse>(HttpMethod.Put, $"locations/{id}", request, cancellationToken);
+    }
+
+    /// <summary>Deletes a location.</summary>
+    /// <param name="id">Location id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    public Task DeleteAsync(int id, CancellationToken cancellationToken = default) =>
+        _client.SendNoContentAsync(HttpMethod.Delete, $"locations/{id}", body: null, cancellationToken);
 }

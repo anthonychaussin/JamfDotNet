@@ -69,15 +69,35 @@ public sealed class JamfTokenProvider : IJamfTokenProvider
     /// <inheritdoc />
     public async Task InvalidateAsync(CancellationToken cancellationToken = default)
     {
+        string? tokenToRevoke = null;
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            tokenToRevoke = _accessToken;
             _accessToken = null;
             _expiresAt = DateTimeOffset.MinValue;
         }
         finally
         {
             _gate.Release();
+        }
+
+        // Best-effort server-side revoke for basic→bearer tokens (OAuth clients typically expire without revoke).
+        if (_options.AuthenticationMode == JamfAuthenticationMode.BasicToken
+            && !string.IsNullOrWhiteSpace(tokenToRevoke))
+        {
+            try
+            {
+                var invalidateUri = new Uri(_options.ApiBaseUrl, "v1/auth/invalidate-token");
+                using var request = new HttpRequestMessage(HttpMethod.Post, invalidateUri);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenToRevoke);
+                using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                _ = response; // Ignore non-success; local cache is already cleared.
+            }
+            catch
+            {
+                // Local invalidation already succeeded; network revoke is best-effort.
+            }
         }
     }
 
@@ -90,12 +110,18 @@ public sealed class JamfTokenProvider : IJamfTokenProvider
     private async Task<string> AcquireClientCredentialsTokenAsync(CancellationToken cancellationToken)
     {
         var tokenUri = new Uri(_options.ApiBaseUrl, "oauth/token");
-        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        var form = new Dictionary<string, string>
         {
             ["grant_type"] = "client_credentials",
             ["client_id"] = _options.ClientId!,
             ["client_secret"] = _options.ClientSecret!,
-        });
+        };
+        if (!string.IsNullOrWhiteSpace(_options.OAuthScope))
+        {
+            form["scope"] = _options.OAuthScope!;
+        }
+
+        using var content = new FormUrlEncodedContent(form);
 
         using var request = new HttpRequestMessage(HttpMethod.Post, tokenUri) { Content = content };
         using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);

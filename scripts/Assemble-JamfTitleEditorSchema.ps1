@@ -30,4 +30,5 @@ if (-not (Test-Path $OutputPath)) {
 }
 
 Write-Host "Using assembled Title Editor bootstrap schema at $OutputPath"
-Write-Host "Set JAMF_TITLE_EDITOR_URL to fetch a full instance schema instead."
+Write-Host "NOTE: The bootstrap OpenAPI is incomplete compared to a live instance export."
+Write-Host "Set JAMF_TITLE_EDITOR_URL to fetch a full instance schema, then run Generate-JamfTitleEditorClient.ps1."

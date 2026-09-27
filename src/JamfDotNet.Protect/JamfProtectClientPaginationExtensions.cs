@@ -86,6 +86,20 @@ public static class JamfProtectClientPaginationExtensions
         CancellationToken cancellationToken = default) =>
         EnumerateAsync(client, (c, next, ct) => c.ListExceptionSetsAsync(pageSize, next, ct), cancellationToken);
 
+    /// <summary>Enumerates all users across pages.</summary>
+    public static IAsyncEnumerable<ProtectUser> EnumerateUsersAsync(
+        this JamfProtectClient client,
+        int? pageSize = null,
+        CancellationToken cancellationToken = default) =>
+        EnumerateAsync(client, (c, next, ct) => c.ListUsersAsync(pageSize, next, ct), cancellationToken);
+
+    /// <summary>Enumerates all telemetry v2 configs across pages.</summary>
+    public static IAsyncEnumerable<ProtectTelemetryV2> EnumerateTelemetriesV2Async(
+        this JamfProtectClient client,
+        int? pageSize = null,
+        CancellationToken cancellationToken = default) =>
+        EnumerateAsync(client, (c, next, ct) => c.ListTelemetriesV2Async(pageSize, next, ct), cancellationToken);
+
     private static IAsyncEnumerable<T> EnumerateAsync<T>(
         JamfProtectClient client,
         Func<JamfProtectClient, string?, CancellationToken, Task<ProtectConnection<T>>> listAsync,
