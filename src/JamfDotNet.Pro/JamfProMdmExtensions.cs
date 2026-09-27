@@ -112,6 +112,113 @@ public static class JamfProMdmExtensions
             cancellationToken);
 
     /// <summary>
+    /// Sends an MDM clear-passcode command to the given management IDs.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="managementIds">Client management IDs.</param>
+    /// <param name="unlockToken">Optional unlock token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Href responses for queued commands.</returns>
+    public static Task<IReadOnlyList<HrefResponse>> ClearPasscodeDevicesAsync(
+        this JamfProClient client,
+        IEnumerable<string> managementIds,
+        string? unlockToken = null,
+        CancellationToken cancellationToken = default) =>
+        SendCommandAsync(
+            client,
+            managementIds,
+            new MdmCommandRequest.MdmCommandRequest_commandData
+            {
+                ClearPasscodeCommand = new ClearPasscodeCommand
+                {
+                    CommandType = MdmCommandType.CLEAR_PASSCODE,
+                    UnlockToken = unlockToken,
+                },
+            },
+            cancellationToken);
+
+    /// <summary>
+    /// Enables lost mode on supervised devices.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="managementIds">Client management IDs.</param>
+    /// <param name="message">Optional lock-screen message (at least message or phone required).</param>
+    /// <param name="phone">Optional phone number displayed on the lock screen.</param>
+    /// <param name="footnote">Optional footnote text.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Href responses for queued commands.</returns>
+    public static Task<IReadOnlyList<HrefResponse>> EnableLostModeAsync(
+        this JamfProClient client,
+        IEnumerable<string> managementIds,
+        string? message = null,
+        string? phone = null,
+        string? footnote = null,
+        CancellationToken cancellationToken = default) =>
+        SendCommandAsync(
+            client,
+            managementIds,
+            new MdmCommandRequest.MdmCommandRequest_commandData
+            {
+                EnableLostModeCommand = new EnableLostModeCommand
+                {
+                    CommandType = MdmCommandType.ENABLE_LOST_MODE,
+                    LostModeMessage = message,
+                    LostModePhone = phone,
+                    LostModeFootnote = footnote,
+                },
+            },
+            cancellationToken);
+
+    /// <summary>
+    /// Disables lost mode on the given management IDs.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="managementIds">Client management IDs.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Href responses for queued commands.</returns>
+    public static Task<IReadOnlyList<HrefResponse>> DisableLostModeAsync(
+        this JamfProClient client,
+        IEnumerable<string> managementIds,
+        CancellationToken cancellationToken = default) =>
+        SendCommandAsync(
+            client,
+            managementIds,
+            new MdmCommandRequest.MdmCommandRequest_commandData
+            {
+                DisableLostModeCommand = new DisableLostModeCommand
+                {
+                    CommandType = MdmCommandType.DISABLE_LOST_MODE,
+                },
+            },
+            cancellationToken);
+
+    /// <summary>
+    /// Requests an inventory refresh via MDM <c>DEVICE_INFORMATION</c> (closest Pro equivalent to School update-inventory).
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="managementIds">Client management IDs.</param>
+    /// <param name="queries">Optional DEVICE_INFORMATION query keys; when null, the server default set is used.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Href responses for queued commands.</returns>
+    public static Task<IReadOnlyList<HrefResponse>> UpdateInventoryAsync(
+        this JamfProClient client,
+        IEnumerable<string> managementIds,
+        IEnumerable<string>? queries = null,
+        CancellationToken cancellationToken = default) =>
+        SendCommandAsync(
+            client,
+            managementIds,
+            new MdmCommandRequest.MdmCommandRequest_commandData
+            {
+                DeviceInformationCommand = new DeviceInformationCommand
+                {
+                    CommandType = MdmCommandType.DEVICE_INFORMATION,
+                    Queries = queries?.ToList(),
+                },
+            },
+            cancellationToken);
+
+    /// <summary>
     /// Sends a blank push (check-in nudge) to the given management IDs.
     /// </summary>
     /// <param name="client">Jamf Pro client.</param>

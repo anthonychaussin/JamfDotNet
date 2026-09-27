@@ -26,15 +26,19 @@ await foreach (var device in platform.EnumerateDevicesAsync(pageSize: 100))
     // …
 }
 
-await foreach (var result in platform.EnumerateBenchmarkDevicesAsync(benchmarkId, pageSize: 100))
+await foreach (var result in platform.EnumerateBenchmarkDevicesAsync(benchmarkId, ruleId, pageSize: 100))
 {
     // …
 }
+
+await platform.RestartDeviceAsync(deviceId);
+await foreach (var deployment in platform.EnumerateAppInstallerDeploymentsAsync()) { /* … */ }
 ```
 
 ## Notes
 
-- DX helpers: `EnumerateDevicesAsync`, `EnumerateDeviceGroupsAsync`, `EnumerateBlueprintsAsync`, `EnumerateBenchmarkDevicesAsync`, `EnumerateBenchmarkRulesAsync`.
+- DX helpers: `EnumerateDevicesAsync`, `EnumerateDeviceGroupsAsync`, `EnumerateBlueprintsAsync`, `EnumerateBenchmarkDevicesAsync` (requires `ruleId`), `EnumerateBenchmarkRulesAsync`, `EnumerateAppInstallerDeploymentsAsync`, `EnumerateDeclarationDevicesAsync`.
+- Device actions: `RestartDeviceAsync`, `ShutDownDeviceAsync`, `EraseDeviceAsync`, `CheckInDeviceAsync`.
 - Optional `RemapKiotaExceptions` remaps Kiota `ApiException` to `JamfApiException`.
 - Targets `net8.0` and `net10.0` in one NuGet package.
 

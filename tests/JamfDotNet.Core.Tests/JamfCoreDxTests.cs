@@ -59,6 +59,32 @@ public sealed class JamfApiExceptionTests
         var api = new ApiException("boom") { ResponseStatusCode = 400 };
         var jamf = JamfApiException.FromApiException(api, "{\"message\":\"bad\"}");
         Assert.Equal("{\"message\":\"bad\"}", jamf.ResponseBody);
+        Assert.Equal(["bad"], jamf.Errors);
+    }
+
+    [Fact]
+    public void FromGraphQlErrors_Parses_Messages()
+    {
+        var jamf = JamfApiException.FromGraphQlErrors(
+            """{"errors":[{"message":"not found"},{"message":"denied"}]}""",
+            HttpStatusCode.OK);
+        Assert.Equal("not found; denied", jamf.Message);
+        Assert.Equal(["not found", "denied"], jamf.Errors);
+    }
+
+    [Fact]
+    public void FromHttpResponse_Captures_RetryAfter()
+    {
+        using var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+        response.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(12));
+        response.Headers.TryAddWithoutValidation("X-RateLimit-Limit", "100");
+        response.Headers.TryAddWithoutValidation("X-RateLimit-Remaining", "0");
+
+        var jamf = JamfApiException.FromHttpResponse("rate limited", response, """{"message":"slow down"}""");
+        Assert.Equal(TimeSpan.FromSeconds(12), jamf.RetryAfter);
+        Assert.Equal("100", jamf.RateLimitLimit);
+        Assert.Equal("0", jamf.RateLimitRemaining);
+        Assert.Equal(["slow down"], jamf.Errors);
     }
 }
 

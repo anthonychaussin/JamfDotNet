@@ -353,4 +353,97 @@ public static class JamfProClientExtensions
             pageSize,
             cancellationToken);
     }
+
+    /// <summary>
+    /// Enumerates computer groups from <c>/api/v1/computer-groups</c> (single-page API response).
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of computer groups.</returns>
+    public static async IAsyncEnumerable<ComputerGroup> EnumerateComputerGroupsAsync(
+        this JamfProClient client,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        var groups = await client.Api.V1.ComputerGroups.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (groups is null)
+        {
+            yield break;
+        }
+
+        foreach (var group in groups)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return group;
+        }
+    }
+
+    /// <summary>
+    /// Enumerates mobile device groups from <c>/api/v1/mobile-device-groups</c> (single-page API response).
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of mobile device groups.</returns>
+    public static async IAsyncEnumerable<MobileDeviceGroup> EnumerateMobileDeviceGroupsAsync(
+        this JamfProClient client,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+#pragma warning disable CS0618 // Jamf still exposes the list endpoint; marked obsolete in OpenAPI.
+        var groups = await client.Api.V1.MobileDeviceGroups.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+#pragma warning restore CS0618
+        if (groups is null)
+        {
+            yield break;
+        }
+
+        foreach (var group in groups)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return group;
+        }
+    }
+
+    /// <summary>
+    /// Enumerates buildings from <c>/api/v1/buildings</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="filter">Optional RSQL filter.</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of buildings.</returns>
+    public static IAsyncEnumerable<Building> EnumerateBuildingsAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        string? filter = null,
+        Action<RequestConfiguration<Generated.V1.Buildings.BuildingsRequestBuilder.BuildingsRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V1.Buildings.BuildingsRequestBuilder.BuildingsRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        config.QueryParameters.Filter = filter;
+                    }
+                };
+
+                var results = await client.Api.V1.Buildings.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<Building> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<Building>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
 }

@@ -479,6 +479,96 @@ public sealed class ProtectAlertFilters
 
     /// <summary>Exact computer UUID.</summary>
     public string? ComputerUuidEquals { get; set; }
+
+    /// <summary>Exact plan id.</summary>
+    public string? PlanIdEquals { get; set; }
+}
+
+/// <summary>Lightweight computer filter for list queries.</summary>
+public sealed class ProtectComputerFilters
+{
+    /// <summary>Exact host name.</summary>
+    public string? HostNameEquals { get; set; }
+
+    /// <summary>Exact serial number.</summary>
+    public string? SerialEquals { get; set; }
+
+    /// <summary>Exact plan id.</summary>
+    public string? PlanIdEquals { get; set; }
+}
+
+/// <summary>Payload used to create or update a prevent list.</summary>
+public sealed class ProtectPreventListWriteRequest
+{
+    /// <summary>List name.</summary>
+    public required string Name { get; set; }
+
+    /// <summary>List type (<c>TEAMID</c>, <c>FILEHASH</c>, <c>CDHASH</c>, <c>SIGNINGID</c>).</summary>
+    public required string Type { get; set; }
+
+    /// <summary>List entries.</summary>
+    public required IReadOnlyList<string> List { get; set; }
+
+    /// <summary>Tags.</summary>
+    public required IReadOnlyList<string> Tags { get; set; }
+
+    /// <summary>Optional description.</summary>
+    public string? Description { get; set; }
+}
+
+/// <summary>Payload used to create or update an action config (name/description only; full alertConfig via <c>ExecuteAsync</c>).</summary>
+public sealed class ProtectActionConfigWriteRequest
+{
+    /// <summary>Action config name.</summary>
+    public required string Name { get; set; }
+
+    /// <summary>Description.</summary>
+    public required string Description { get; set; }
+}
+
+/// <summary>Payload used to create or update an analytic set.</summary>
+public sealed class ProtectAnalyticSetWriteRequest
+{
+    /// <summary>Set name.</summary>
+    public required string Name { get; set; }
+
+    /// <summary>Analytic UUIDs included in the set.</summary>
+    public required IReadOnlyList<string> AnalyticIds { get; set; }
+
+    /// <summary>Optional description.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>Optional types (<c>Prevent</c>, <c>Report</c>).</summary>
+    public IReadOnlyList<string>? Types { get; set; }
+}
+
+/// <summary>Single exception entry for an exception set write.</summary>
+public sealed class ProtectExceptionWriteRequest
+{
+    /// <summary>Exception type (<c>TeamId</c>, <c>Path</c>, <c>Executable</c>, …).</summary>
+    public required string Type { get; set; }
+
+    /// <summary>Ignore activity (<c>Analytics</c> or <c>Telemetry</c>).</summary>
+    public required string IgnoreActivity { get; set; }
+
+    /// <summary>Optional value (path, team id, …).</summary>
+    public string? Value { get; set; }
+
+    /// <summary>Optional analytic UUID.</summary>
+    public string? AnalyticUuid { get; set; }
+}
+
+/// <summary>Payload used to create or update an exception set.</summary>
+public sealed class ProtectExceptionSetWriteRequest
+{
+    /// <summary>Set name.</summary>
+    public required string Name { get; set; }
+
+    /// <summary>Exception entries (required by the API).</summary>
+    public required IReadOnlyList<ProtectExceptionWriteRequest> Exceptions { get; set; }
+
+    /// <summary>Optional description.</summary>
+    public string? Description { get; set; }
 }
 
 /// <summary>Response for <c>getComputerCount</c>.</summary>

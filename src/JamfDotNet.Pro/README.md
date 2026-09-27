@@ -27,7 +27,8 @@ await foreach (var policy in jamf.EnumeratePatchPoliciesAsync()) { /* … */ }
 ## Notes
 
 - Full OpenAPI surface is available via `client.Api…`.
-- DX helpers: pagination (`Enumerate*Async`), `JamfRsql`, MDM wrappers (`RestartDevicesAsync`, `LockDevicesAsync`, …), optional `RemapKiotaExceptions`.
+- DX helpers: pagination (`Enumerate*Async` including computer/mobile groups and buildings), `JamfRsql`, MDM wrappers (`RestartDevicesAsync`, `LockDevicesAsync`, `ClearPasscodeDevicesAsync`, `EnableLostModeAsync`, `UpdateInventoryAsync`, …), optional `RemapKiotaExceptions`.
+- Classic policies / OS X configuration profiles remain Classic API (XML); prefer Pro when an equivalent exists.
 - Targets `net8.0` and `net10.0` in one NuGet package.
 
 See the [repository README](https://github.com/anthonychaussin/JamfDotNet) for schema fetch/regen scripts.

@@ -83,8 +83,30 @@ public static class JamfServiceCollectionExtensions
         Func<IServiceProvider, IJamfTokenProvider?>? tokenProviderFactory = null)
     {
         ArgumentNullException.ThrowIfNull(builder);
+        builder.Services.AddOptions<JamfResilienceOptions>();
         return builder.AddHttpMessageHandler(sp =>
-            new JamfResilienceHandler(tokenProviderFactory?.Invoke(sp)));
+        {
+            var options = sp.GetService<IOptions<JamfResilienceOptions>>()?.Value
+                          ?? new JamfResilienceOptions();
+            return new JamfResilienceHandler(tokenProviderFactory?.Invoke(sp), options);
+        });
+    }
+
+    /// <summary>
+    /// Binds <see cref="JamfResilienceOptions"/> from configuration (<see cref="JamfResilienceOptions.SectionName"/>).
+    /// </summary>
+    /// <param name="services">Service collection.</param>
+    /// <param name="configuration">Configuration root or section.</param>
+    /// <returns>The same service collection.</returns>
+    public static IServiceCollection ConfigureJamfResilience(this IServiceCollection services, IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
+        var section = configuration is IConfigurationSection s && s.Path == JamfResilienceOptions.SectionName
+            ? s
+            : configuration.GetSection(JamfResilienceOptions.SectionName);
+        services.Configure<JamfResilienceOptions>(section);
+        return services;
     }
 }
 

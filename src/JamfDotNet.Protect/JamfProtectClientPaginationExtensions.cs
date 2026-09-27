@@ -34,8 +34,9 @@ public static class JamfProtectClientPaginationExtensions
     public static IAsyncEnumerable<ProtectComputer> EnumerateComputersAsync(
         this JamfProtectClient client,
         int? pageSize = null,
+        ProtectComputerFilters? filter = null,
         CancellationToken cancellationToken = default) =>
-        EnumerateAsync(client, (c, next, ct) => c.ListComputersAsync(pageSize, next, ct), cancellationToken);
+        EnumerateAsync(client, (c, next, ct) => c.ListComputersAsync(pageSize, next, filter, ct), cancellationToken);
 
     /// <summary>Enumerates all USB control sets across pages.</summary>
     public static IAsyncEnumerable<ProtectUsbControlSet> EnumerateUsbControlSetsAsync(
@@ -55,8 +56,9 @@ public static class JamfProtectClientPaginationExtensions
     public static IAsyncEnumerable<ProtectAlert> EnumerateAlertsAsync(
         this JamfProtectClient client,
         int? pageSize = null,
+        ProtectAlertFilters? filter = null,
         CancellationToken cancellationToken = default) =>
-        EnumerateAsync(client, (c, next, ct) => c.ListAlertsAsync(pageSize, next, ct), cancellationToken);
+        EnumerateAsync(client, (c, next, ct) => c.ListAlertsAsync(pageSize, next, filter, ct), cancellationToken);
 
     /// <summary>Enumerates all groups across pages.</summary>
     public static IAsyncEnumerable<ProtectGroup> EnumerateGroupsAsync(

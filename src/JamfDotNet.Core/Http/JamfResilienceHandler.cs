@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using JamfDotNet.Core.Authentication;
+using Microsoft.Extensions.Options;
 
 namespace JamfDotNet.Core.Http;
 
@@ -18,6 +19,7 @@ public sealed class JamfResilienceHandler : DelegatingHandler
     private readonly IJamfTokenProvider? _tokenProvider;
     private readonly int _maxTransientRetries;
     private readonly TimeSpan _baseDelay;
+    private readonly bool _enableUnauthorizedRefresh;
 
     /// <summary>
     /// Creates a resilience handler.
@@ -28,15 +30,44 @@ public sealed class JamfResilienceHandler : DelegatingHandler
     /// </param>
     /// <param name="maxTransientRetries">Maximum retries for 429 / 503 (default 2).</param>
     /// <param name="baseDelay">Base delay for exponential backoff when <c>Retry-After</c> is absent.</param>
+    /// <param name="enableUnauthorizedRefresh">When <see langword="false"/>, 401 responses are not retried.</param>
     public JamfResilienceHandler(
         IJamfTokenProvider? tokenProvider = null,
         int maxTransientRetries = 2,
-        TimeSpan? baseDelay = null)
+        TimeSpan? baseDelay = null,
+        bool enableUnauthorizedRefresh = true)
+        : this(tokenProvider, new JamfResilienceOptions
+        {
+            MaxTransientRetries = maxTransientRetries,
+            BaseDelay = baseDelay ?? TimeSpan.FromMilliseconds(250),
+            EnableUnauthorizedRefresh = enableUnauthorizedRefresh,
+        })
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(maxTransientRetries);
+    }
+
+    /// <summary>
+    /// Creates a resilience handler from options.
+    /// </summary>
+    /// <param name="tokenProvider">Optional token provider for 401 refresh.</param>
+    /// <param name="options">Resilience options.</param>
+    public JamfResilienceHandler(IJamfTokenProvider? tokenProvider, JamfResilienceOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentOutOfRangeException.ThrowIfNegative(options.MaxTransientRetries);
         _tokenProvider = tokenProvider;
-        _maxTransientRetries = maxTransientRetries;
-        _baseDelay = baseDelay ?? TimeSpan.FromMilliseconds(250);
+        _maxTransientRetries = options.MaxTransientRetries;
+        _baseDelay = options.BaseDelay <= TimeSpan.Zero ? TimeSpan.FromMilliseconds(250) : options.BaseDelay;
+        _enableUnauthorizedRefresh = options.EnableUnauthorizedRefresh;
+    }
+
+    /// <summary>
+    /// Creates a resilience handler from DI options.
+    /// </summary>
+    /// <param name="tokenProvider">Optional token provider for 401 refresh.</param>
+    /// <param name="options">Options monitor.</param>
+    public JamfResilienceHandler(IJamfTokenProvider? tokenProvider, IOptions<JamfResilienceOptions> options)
+        : this(tokenProvider, options?.Value ?? new JamfResilienceOptions())
+    {
     }
 
     /// <inheritdoc />
@@ -54,6 +85,7 @@ public sealed class JamfResilienceHandler : DelegatingHandler
             response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             if (response.StatusCode == HttpStatusCode.Unauthorized
+                && _enableUnauthorizedRefresh
                 && _tokenProvider is not null
                 && !refreshedUnauthorized)
             {

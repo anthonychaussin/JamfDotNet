@@ -12,18 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Core:** `JamfRsql` helper for building Jamf Pro RSQL `filter` strings.
 - **Core:** `JamfClientOptions.OAuthScope` for optional OAuth2 role scoping.
 - **Core:** `RemapKiotaExceptions` with `JamfRemappingRequestAdapter` for Pro, Classic, Platform, and Title Editor.
-- **Core:** richer `JamfApiException.FromApiException` body extraction + explicit body overload.
+- **Core:** `JamfResilienceOptions` + `ConfigureJamfResilience`; richer `JamfApiException` (GraphQL `errors[]`, `RetryAfter`, rate-limit headers, `FromHttpResponse` / `FromGraphQlErrors`).
 - **Core:** Basic→bearer `InvalidateAsync` now best-effort calls `/api/v1/auth/invalidate-token`.
-- **Pro:** pagination helpers for mobile devices, scripts, packages, users, categories, and patch policies; MDM wrappers (`RestartDevicesAsync`, `LockDevicesAsync`, …).
-- **Protect:** typed plans/computers mutations, organization, users/roles CRUD, insights, telemetry v2, audit logs, group get/update, computer/aggregate counts, alert status counts (optional filters) + matching `Enumerate*` helpers including `EnumerateAuditLogsByDateAsync`.
-- **Platform:** `EnumerateDevicesAsync` / `EnumerateDeviceGroupsAsync` / `EnumerateBlueprintsAsync` / `EnumerateBenchmarkDevicesAsync` / `EnumerateBenchmarkRulesAsync`; live smoke uses `EnumerateDevicesAsync`.
-- **School:** CRUD writes for groups/classes/profiles/apps/locations; additional MDM commands (`shutdown`, `blankpush`, `updateinventory`, lost mode, `SendCommandAsync`).
-- **Tests:** dedicated `JamfDotNet.Core.Tests` project (incl. remapping adapter); Protect group/count mocks; School shutdown MDM.
+- **Pro:** pagination helpers for inventory, mobile devices, scripts, packages, users, categories, patch policies, computer/mobile groups, buildings; MDM wrappers including clear passcode, lost mode, update inventory (`DEVICE_INFORMATION`).
+- **Protect:** typed plans/computers/groups/users/roles, config CRUD (PreventList, ActionConfig, AnalyticSet, ExceptionSet), list filters for alerts/computers, counts, audit logs + `Enumerate*`.
+- **Platform:** device/group/blueprint/benchmark/app-installer/declaration `Enumerate*`; device action helpers (`RestartDeviceAsync`, …); live smoke uses `EnumerateDevicesAsync`.
+- **Classic:** `JamfClassicXml` + create/update helpers for categories and buildings (Pro-first for new work).
+- **School:** CRUD writes; additional MDM commands.
+- **Tests:** Core remapping/exception/resilience coverage; Protect/School/Classic XML; Pro MDM argument checks.
 - Optional CI `live-smoke` job (manual / tag) gated on repository secrets.
 
 ### Changed
 
-- Classic / Platform / Pro / School / Title Editor package READMEs document remap, pagination helpers, MDM, and beta gateway notes.
+- Package READMEs document remap, pagination, MDM, Classic XML, and Platform device actions.
 
 ## [0.1.0] - 2026-09-27
 

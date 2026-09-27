@@ -231,4 +231,94 @@ public static class JamfPlatformClientExtensions
             pageSize,
             cancellationToken);
     }
+
+    /// <summary>
+    /// Enumerates App Installer deployments from <c>/api/app-installers/v1/app-installers/deployments</c>.
+    /// </summary>
+    /// <param name="client">Platform client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of deployment list entries.</returns>
+    public static IAsyncEnumerable<Generated.AppInstallerDeployments.Models.AppInstallerDeploymentListEntry> EnumerateAppInstallerDeploymentsAsync(
+        this JamfPlatformClient client,
+        int pageSize = 100,
+        Action<RequestConfiguration<Generated.AppInstallerDeployments.V1.AppInstallers.Deployments.DeploymentsRequestBuilder.DeploymentsRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+        var deployments = client.AppInstallerDeployments.V1.AppInstallers.Deployments;
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.AppInstallerDeployments.V1.AppInstallers.Deployments.DeploymentsRequestBuilder.DeploymentsRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                };
+
+                var results = await deployments.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<Generated.AppInstallerDeployments.Models.AppInstallerDeploymentListEntry> items =
+                    results?.Results is { Count: > 0 } list
+                        ? list
+                        : Array.Empty<Generated.AppInstallerDeployments.Models.AppInstallerDeploymentListEntry>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates devices reporting a given DDM declaration identifier.
+    /// </summary>
+    /// <param name="client">Platform client.</param>
+    /// <param name="declarationIdentifier">Declaration identifier from status reports.</param>
+    /// <param name="filter">RSQL filter (required by the API; default <c>active==true</c>).</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of filtered declaration device results.</returns>
+    public static IAsyncEnumerable<Generated.DeclarationReporting.Models.FilteredResultDto> EnumerateDeclarationDevicesAsync(
+        this JamfPlatformClient client,
+        string declarationIdentifier,
+        string filter = "active==true",
+        int pageSize = 100,
+        Action<RequestConfiguration<Generated.DeclarationReporting.V1.Tenant.Item.Declarations.Item.Devices.DevicesRequestBuilder.DevicesRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrWhiteSpace(declarationIdentifier);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filter);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+#pragma warning disable CS0618 // OpenAPI marks declaration reporting indexers obsolete while still shipping them.
+        var devices = client.ForTenant().DeclarationReporting.Declarations[declarationIdentifier].Devices;
+#pragma warning restore CS0618
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.DeclarationReporting.V1.Tenant.Item.Declarations.Item.Devices.DevicesRequestBuilder.DevicesRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.Size = size;
+                    config.QueryParameters.Filter = filter;
+                };
+
+                var results = await devices.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<Generated.DeclarationReporting.Models.FilteredResultDto> items =
+                    results?.Results is { Count: > 0 } list
+                        ? list
+                        : Array.Empty<Generated.DeclarationReporting.Models.FilteredResultDto>();
+                int? total = results?.TotalCount is { } longTotal && longTotal <= int.MaxValue
+                    ? (int)longTotal
+                    : results?.TotalCount is null ? null : int.MaxValue;
+                return (items, total);
+            },
+            pageSize,
+            cancellationToken);
+    }
 }
