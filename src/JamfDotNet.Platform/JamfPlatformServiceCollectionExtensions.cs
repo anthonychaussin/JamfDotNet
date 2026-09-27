@@ -58,6 +58,7 @@ public static class JamfPlatformServiceCollectionExtensions
         string? sectionName = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        services.ConfigureJamfResilience(configuration);
         return services.AddJamfPlatformClient(configuration.GetSection(sectionName ?? JamfPlatformOptions.SectionName));
     }
 

@@ -53,6 +53,7 @@ public static class JamfSchoolServiceCollectionExtensions
         string? sectionName = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        services.ConfigureJamfResilience(configuration);
         return services.AddJamfSchoolClient(configuration.GetSection(sectionName ?? JamfSchoolOptions.SectionName));
     }
 

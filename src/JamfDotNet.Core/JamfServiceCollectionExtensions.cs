@@ -53,6 +53,7 @@ public static class JamfServiceCollectionExtensions
         string? sectionName = null)
     {
         ArgumentNullException.ThrowIfNull(configuration);
+        services.ConfigureJamfResilience(configuration);
         return services.AddJamfCore(configuration.GetSection(sectionName ?? JamfClientOptions.SectionName));
     }
 

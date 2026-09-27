@@ -88,8 +88,7 @@ public sealed class JamfProtectClient : IDisposable
     public async Task<JsonDocument> ExecuteAsync(string query, object? variables = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(query);
-        var payload = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
-        return JsonDocument.Parse(payload);
+        return await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Lists Protect RBAC roles.</summary>
@@ -1068,12 +1067,14 @@ public sealed class JamfProtectClient : IDisposable
               }
             }
             """;
-        var json = await SendGraphQlAsync(query, variables: null, cancellationToken).ConfigureAwait(false);
-        using var document = JsonDocument.Parse(json);
+        using var document = await SendGraphQlAsync(query, variables: null, cancellationToken).ConfigureAwait(false);
         if (!document.RootElement.TryGetProperty("data", out var data)
             || !data.TryGetProperty("listInsights", out var element))
         {
-            throw new JamfApiException("Protect GraphQL response did not include data.listInsights.", System.Net.HttpStatusCode.OK, json);
+            throw new JamfApiException(
+                "Protect GraphQL response did not include data.listInsights.",
+                System.Net.HttpStatusCode.OK,
+                document.RootElement.GetRawText());
         }
 
         if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
@@ -1440,12 +1441,14 @@ public sealed class JamfProtectClient : IDisposable
         object variables,
         CancellationToken cancellationToken)
     {
-        var json = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
-        using var document = JsonDocument.Parse(json);
+        using var document = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
         if (!document.RootElement.TryGetProperty("data", out var data)
             || !data.TryGetProperty(fieldName, out var connectionElement))
         {
-            throw new JamfApiException($"Protect GraphQL response did not include data.{fieldName}.", System.Net.HttpStatusCode.OK, json);
+            throw new JamfApiException(
+                $"Protect GraphQL response did not include data.{fieldName}.",
+                System.Net.HttpStatusCode.OK,
+                document.RootElement.GetRawText());
         }
 
         var connection = connectionElement.Deserialize<ProtectConnection<T>>(JsonOptions)
@@ -1460,12 +1463,14 @@ public sealed class JamfProtectClient : IDisposable
         CancellationToken cancellationToken)
         where T : class
     {
-        var json = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
-        using var document = JsonDocument.Parse(json);
+        using var document = await SendGraphQlAsync(query, variables, cancellationToken).ConfigureAwait(false);
         if (!document.RootElement.TryGetProperty("data", out var data)
             || !data.TryGetProperty(fieldName, out var element))
         {
-            throw new JamfApiException($"Protect GraphQL response did not include data.{fieldName}.", System.Net.HttpStatusCode.OK, json);
+            throw new JamfApiException(
+                $"Protect GraphQL response did not include data.{fieldName}.",
+                System.Net.HttpStatusCode.OK,
+                document.RootElement.GetRawText());
         }
 
         if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
@@ -1476,30 +1481,41 @@ public sealed class JamfProtectClient : IDisposable
         return element.Deserialize<T>(JsonOptions);
     }
 
-    private async Task<string> SendGraphQlAsync(string query, object? variables, CancellationToken cancellationToken)
+    /// <summary>
+    /// Posts a GraphQL document, validates HTTP + top-level <c>errors</c>, and returns a single parsed document.
+    /// Caller owns disposal.
+    /// </summary>
+    private async Task<JsonDocument> SendGraphQlAsync(string query, object? variables, CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Post, _graphQlEndpoint);
         request.Content = JsonContent.Create(new GraphQlRequest(query, variables), options: JsonOptions);
 
         using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+
         if (!response.IsSuccessStatusCode)
         {
-            throw JamfApiException.FromHttpResponse(
-                $"Protect GraphQL request failed with status {(int)response.StatusCode}.",
-                response,
-                body);
+            using (document)
+            {
+                throw JamfApiException.FromHttpResponse(
+                    $"Protect GraphQL request failed with status {(int)response.StatusCode}.",
+                    response,
+                    document.RootElement.GetRawText());
+            }
         }
 
-        using var document = JsonDocument.Parse(body);
         if (document.RootElement.TryGetProperty("errors", out var errors)
             && errors.ValueKind == JsonValueKind.Array
             && errors.GetArrayLength() > 0)
         {
-            throw JamfApiException.FromGraphQlErrors(body, response.StatusCode);
+            using (document)
+            {
+                throw JamfApiException.FromGraphQlErrors(document.RootElement.GetRawText(), response.StatusCode);
+            }
         }
 
-        return body;
+        return document;
     }
 
     /// <inheritdoc />

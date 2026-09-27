@@ -29,30 +29,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V4.ComputersInventory.ComputersInventoryRequestBuilder.ComputersInventoryRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V4.ComputersInventory.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-
-                IReadOnlyList<ComputerInventoryV4> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<ComputerInventoryV4>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V4.ComputersInventory.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -71,25 +56,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V2.MobileDevices.MobileDevicesRequestBuilder.MobileDevicesRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                };
-
-                var results = await client.Api.V2.MobileDevices.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<MobileDeviceV2> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<MobileDeviceV2>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V2.MobileDevices.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -110,29 +85,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V2.MobileDevices.Detail.DetailRequestBuilder.DetailRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V2.MobileDevices.Detail.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<MobileDeviceResponse> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<MobileDeviceResponse>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V2.MobileDevices.Detail.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -153,29 +114,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.Scripts.ScriptsRequestBuilder.ScriptsRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.Scripts.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<Script> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<Script>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V1.Scripts.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -196,29 +143,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.Packages.PackagesRequestBuilder.PackagesRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.Packages.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<Package> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<Package>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V1.Packages.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -239,32 +172,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.Users.UsersRequestBuilder.UsersRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.Users.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<User> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<User>();
-                int? total = results?.TotalCount is { } longTotal && longTotal <= int.MaxValue
-                    ? (int)longTotal
-                    : results?.TotalCount is null ? null : int.MaxValue;
-                return (items, total);
+                var results = await client.Api.V1.Users.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -285,29 +201,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.Categories.CategoriesRequestBuilder.CategoriesRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.Categories.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<Category> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<Category>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V1.Categories.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -328,29 +230,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V2.PatchPolicies.PatchPoliciesRequestBuilder.PatchPoliciesRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V2.PatchPolicies.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<PatchPolicyListView> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<PatchPolicyListView>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V2.PatchPolicies.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -421,29 +309,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.Buildings.BuildingsRequestBuilder.BuildingsRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.Buildings.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<Building> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<Building>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V1.Buildings.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -464,29 +338,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.Departments.DepartmentsRequestBuilder.DepartmentsRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.Departments.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<Department> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<Department>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V1.Departments.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -507,29 +367,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.ComputerExtensionAttributes.ComputerExtensionAttributesRequestBuilder.ComputerExtensionAttributesRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.ComputerExtensionAttributes.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<ComputerExtensionAttributes> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<ComputerExtensionAttributes>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V1.ComputerExtensionAttributes.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -550,29 +396,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V1.MobileDeviceExtensionAttributes.MobileDeviceExtensionAttributesRequestBuilder.MobileDeviceExtensionAttributesRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V1.MobileDeviceExtensionAttributes.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<MobileDeviceExtensionAttributes> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<MobileDeviceExtensionAttributes>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V1.MobileDeviceExtensionAttributes.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -591,25 +423,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V3.ComputerPrestages.ComputerPrestagesRequestBuilder.ComputerPrestagesRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                };
-
-                var results = await client.Api.V3.ComputerPrestages.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<GetComputerPrestageV3> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<GetComputerPrestageV3>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V3.ComputerPrestages.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -630,29 +452,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V3.ComputerGroups.SmartGroups.SmartGroupsRequestBuilder.SmartGroupsRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V3.ComputerGroups.SmartGroups.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<SmartComputerGroupSearch> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<SmartComputerGroupSearch>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V3.ComputerGroups.SmartGroups.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -673,29 +481,15 @@ public static class JamfProClientExtensions
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
-
-        return JamfPagination.EnumerateByPageAsync(
+        return EnumeratePagesAsync(
+            pageSize,
             async (page, size, ct) =>
             {
-                Action<RequestConfiguration<Generated.V3.ComputerGroups.StaticGroups.StaticGroupsRequestBuilder.StaticGroupsRequestBuilderGetQueryParameters>> pageConfigure = config =>
-                {
-                    configure?.Invoke(config);
-                    config.QueryParameters.Page = page;
-                    config.QueryParameters.PageSize = size;
-                    if (!string.IsNullOrWhiteSpace(filter))
-                    {
-                        config.QueryParameters.Filter = filter;
-                    }
-                };
-
-                var results = await client.Api.V3.ComputerGroups.StaticGroups.GetAsync(pageConfigure, ct).ConfigureAwait(false);
-                IReadOnlyList<StaticComputerGroupSummary> items = results?.Results is { Count: > 0 } list
-                    ? list
-                    : Array.Empty<StaticComputerGroupSummary>();
-                return (items, results?.TotalCount);
+                var results = await client.Api.V3.ComputerGroups.StaticGroups.GetAsync(
+                    PageConfigure(configure, page, size, static (q, p, s) => { q.Page = p; q.PageSize = s; }, filter, static (q, f) => q.Filter = f),
+                    ct).ConfigureAwait(false);
+                return Page(results?.Results, results?.TotalCount);
             },
-            pageSize,
             cancellationToken);
     }
 
@@ -722,4 +516,45 @@ public static class JamfProClientExtensions
             yield return site;
         }
     }
+
+    private static IAsyncEnumerable<T> EnumeratePagesAsync<T>(
+        int pageSize,
+        Func<int, int, CancellationToken, Task<(IReadOnlyList<T> Items, int? TotalCount)>> fetchPage,
+        CancellationToken cancellationToken)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+        return JamfPagination.EnumerateByPageAsync(fetchPage, pageSize, cancellationToken);
+    }
+
+    private static Action<RequestConfiguration<TQuery>> PageConfigure<TQuery>(
+        Action<RequestConfiguration<TQuery>>? configure,
+        int page,
+        int size,
+        Action<TQuery, int, int> setPageAndSize,
+        string? filter = null,
+        Action<TQuery, string>? setFilter = null)
+        where TQuery : class, new() =>
+        config =>
+        {
+            configure?.Invoke(config);
+            setPageAndSize(config.QueryParameters, page, size);
+            if (!string.IsNullOrWhiteSpace(filter) && setFilter is not null)
+            {
+                setFilter(config.QueryParameters, filter);
+            }
+        };
+
+    private static (IReadOnlyList<T> Items, int? TotalCount) Page<T>(IList<T>? results, int? totalCount) =>
+        (results is { Count: > 0 } list ? (IReadOnlyList<T>)list : Array.Empty<T>(), totalCount);
+
+    private static (IReadOnlyList<T> Items, int? TotalCount) Page<T>(IList<T>? results, long? totalCount) =>
+        (results is { Count: > 0 } list ? (IReadOnlyList<T>)list : Array.Empty<T>(), ClampTotalCount(totalCount));
+
+    private static int? ClampTotalCount(long? totalCount) =>
+        totalCount switch
+        {
+            null => null,
+            <= int.MaxValue => (int)totalCount.Value,
+            _ => int.MaxValue,
+        };
 }
