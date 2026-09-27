@@ -14,6 +14,7 @@ services.AddJamfPlatformClient(o =>
     o.ClientId = "...";
     o.ClientSecret = "...";
     o.TenantId = "...";
+    // o.RemapKiotaExceptions = true;
 });
 
 var platform = provider.GetRequiredService<JamfPlatformClient>();
@@ -24,6 +25,17 @@ await foreach (var device in platform.EnumerateDevicesAsync(pageSize: 100))
 {
     // …
 }
+
+await foreach (var result in platform.EnumerateBenchmarkDevicesAsync(benchmarkId, pageSize: 100))
+{
+    // …
+}
 ```
+
+## Notes
+
+- DX helpers: `EnumerateDevicesAsync`, `EnumerateDeviceGroupsAsync`, `EnumerateBlueprintsAsync`, `EnumerateBenchmarkDevicesAsync`, `EnumerateBenchmarkRulesAsync`.
+- Optional `RemapKiotaExceptions` remaps Kiota `ApiException` to `JamfApiException`.
+- Targets `net8.0` and `net10.0` in one NuGet package.
 
 See the [repository README](https://github.com/anthonychaussin/JamfDotNet).

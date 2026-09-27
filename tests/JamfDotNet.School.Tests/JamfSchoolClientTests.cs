@@ -78,6 +78,25 @@ public sealed class JamfSchoolClientTests
     }
 
     [Fact]
+    public async Task Devices_ShutdownAsync_Posts_Command()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.Expect(HttpMethod.Post, "https://contoso.jamfcloud.com/api/devices/abc/shutdown")
+            .Respond(System.Net.HttpStatusCode.NoContent);
+
+        var options = new JamfSchoolOptions
+        {
+            BaseUrl = new Uri("https://contoso.jamfcloud.com"),
+            NetworkId = "network",
+            ApiKey = "key",
+        };
+        using var http = mock.ToHttpClient();
+        using var client = JamfSchoolClient.Create(options, http);
+        await client.Devices.ShutdownAsync("abc", TestContext.Current.CancellationToken);
+        mock.VerifyNoOutstandingExpectation();
+    }
+
+    [Fact]
     public async Task Users_CreateAsync_Posts_Json()
     {
         var mock = new MockHttpMessageHandler();

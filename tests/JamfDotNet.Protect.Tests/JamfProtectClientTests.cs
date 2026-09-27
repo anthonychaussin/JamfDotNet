@@ -187,4 +187,51 @@ public sealed class JamfProtectClientTests
         var updated = await client.UpdateAlertsAsync(["a1"], "Resolved", TestContext.Current.CancellationToken);
         Assert.Equal("Resolved", updated.Items![0].Status);
     }
+
+    [Fact]
+    public async Task UpdateGroupAsync_And_Counts_Deserialize()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "https://contoso.protect.jamfcloud.com/app")
+            .Respond(async request =>
+            {
+                var body = await request.Content!.ReadAsStringAsync();
+                if (body.Contains("updateGroup", StringComparison.Ordinal))
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("""{"data":{"updateGroup":{"id":"g1","name":"Fleet-2"}}}""", System.Text.Encoding.UTF8, "application/json"),
+                    };
+                }
+
+                if (body.Contains("getComputerCount", StringComparison.Ordinal))
+                {
+                    return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("""{"data":{"getComputerCount":{"computers":42}}}""", System.Text.Encoding.UTF8, "application/json"),
+                    };
+                }
+
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("""{"data":{"getCount":{"computers":42,"alerts":7,"alertsComputers":5,"insightsComputers":3}}}""", System.Text.Encoding.UTF8, "application/json"),
+                };
+            });
+
+        using var http = mock.ToHttpClient();
+        using var client = new JamfProtectClient(http, new Uri("https://contoso.protect.jamfcloud.com/app"));
+
+        var group = await client.UpdateGroupAsync(
+            "g1",
+            new Models.ProtectGroupUpdateRequest { Name = "Fleet-2" },
+            TestContext.Current.CancellationToken);
+        Assert.Equal("Fleet-2", group!.Name);
+
+        var computers = await client.GetComputerCountAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(42, computers!.Computers);
+
+        var counts = await client.GetCountAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(42, counts!.Computers);
+        Assert.Equal(7, counts.Alerts);
+    }
 }

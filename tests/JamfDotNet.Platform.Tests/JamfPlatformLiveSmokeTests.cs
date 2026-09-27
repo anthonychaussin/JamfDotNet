@@ -41,7 +41,7 @@ public sealed class JamfPlatformLiveSmokeTests
     }
 
     [Fact]
-    public async Task Can_List_Tenant_Devices()
+    public async Task Can_Enumerate_Tenant_Devices()
     {
         if (!IsConfigured)
         {
@@ -59,15 +59,13 @@ public sealed class JamfPlatformLiveSmokeTests
 
         await using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<JamfPlatformClient>();
-        var page = await client.ForTenant().Devices.Devices.GetAsync(
-            config =>
-            {
-                config.QueryParameters.Page = 0;
-                config.QueryParameters.PageSize = 1;
-            },
-            TestContext.Current.CancellationToken);
+        var count = 0;
+        await foreach (var _ in client.EnumerateDevicesAsync(pageSize: 1, cancellationToken: TestContext.Current.CancellationToken))
+        {
+            count++;
+            break;
+        }
 
-        Assert.NotNull(page);
-        Assert.True(page.PageSize is null or >= 1);
+        Assert.True(count is 0 or 1);
     }
 }

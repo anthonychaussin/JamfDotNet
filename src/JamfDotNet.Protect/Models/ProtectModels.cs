@@ -454,3 +454,52 @@ public sealed class ProtectRoleWriteRequest
     /// <summary>Write resource privileges.</summary>
     public required IReadOnlyList<string> WriteResources { get; set; }
 }
+
+/// <summary>Payload used to update a Protect group.</summary>
+public sealed class ProtectGroupUpdateRequest
+{
+    /// <summary>Group name.</summary>
+    public string? Name { get; set; }
+
+    /// <summary>Whether the group is an access group.</summary>
+    public bool? AccessGroup { get; set; }
+
+    /// <summary>Role ids assigned to the group.</summary>
+    public IReadOnlyList<string>? RoleIds { get; set; }
+}
+
+/// <summary>Lightweight alert filter for status count and list queries.</summary>
+public sealed class ProtectAlertFilters
+{
+    /// <summary>Exact alert status (<c>New</c>, <c>InProgress</c>, <c>Resolved</c>, <c>AutoResolved</c>).</summary>
+    public string? StatusEquals { get; set; }
+
+    /// <summary>Exact severity (<c>High</c>, <c>Medium</c>, <c>Low</c>, <c>Informational</c>).</summary>
+    public string? SeverityEquals { get; set; }
+
+    /// <summary>Exact computer UUID.</summary>
+    public string? ComputerUuidEquals { get; set; }
+}
+
+/// <summary>Response for <c>getComputerCount</c>.</summary>
+public sealed class ProtectComputerCountResponse
+{
+    /// <summary>Number of computers matching the query.</summary>
+    public int? Computers { get; set; }
+}
+
+/// <summary>Response for <c>getCount</c>.</summary>
+public sealed class ProtectCountResponse
+{
+    /// <summary>Computer count.</summary>
+    public int? Computers { get; set; }
+
+    /// <summary>Alert count.</summary>
+    public int? Alerts { get; set; }
+
+    /// <summary>Distinct computers with alerts.</summary>
+    public int? AlertsComputers { get; set; }
+
+    /// <summary>Computers with insights.</summary>
+    public int? InsightsComputers { get; set; }
+}

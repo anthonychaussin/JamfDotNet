@@ -25,6 +25,12 @@ public sealed class JamfPlatformOptions
     /// <summary>Seconds before expiry to refresh the token.</summary>
     public int TokenRefreshSkewSeconds { get; set; } = 60;
 
+    /// <summary>
+    /// When <see langword="true"/>, Kiota <c>ApiException</c> failures are remapped to
+    /// <see cref="JamfApiException"/> automatically for Platform clients created from these options.
+    /// </summary>
+    public bool RemapKiotaExceptions { get; set; }
+
     /// <summary>Absolute URI of the Platform token endpoint.</summary>
     public Uri TokenEndpoint => new(Combine(GatewayBaseUrl, "auth/token"));
 

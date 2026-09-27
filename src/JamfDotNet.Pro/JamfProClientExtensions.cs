@@ -310,4 +310,47 @@ public static class JamfProClientExtensions
             pageSize,
             cancellationToken);
     }
+
+    /// <summary>
+    /// Enumerates patch policies from <c>/api/v2/patch-policies</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="filter">Optional RSQL filter.</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of patch policies.</returns>
+    public static IAsyncEnumerable<PatchPolicyListView> EnumeratePatchPoliciesAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        string? filter = null,
+        Action<RequestConfiguration<Generated.V2.PatchPolicies.PatchPoliciesRequestBuilder.PatchPoliciesRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V2.PatchPolicies.PatchPoliciesRequestBuilder.PatchPoliciesRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        config.QueryParameters.Filter = filter;
+                    }
+                };
+
+                var results = await client.Api.V2.PatchPolicies.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<PatchPolicyListView> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<PatchPolicyListView>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
 }

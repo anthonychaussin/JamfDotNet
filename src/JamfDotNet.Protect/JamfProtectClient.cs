@@ -419,6 +419,55 @@ public sealed class JamfProtectClient : IDisposable
         return QueryObjectAsync<ProtectGroup>(query, "deleteGroup", new { id }, cancellationToken);
     }
 
+    /// <summary>Gets a Protect group by id.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Group, or <see langword="null"/> when not found.</returns>
+    public Task<ProtectGroup?> GetGroupAsync(string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        const string query = """
+            query GetGroup($id: ID!) {
+              getGroup(id: $id) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectGroup>(query, "getGroup", new { id }, cancellationToken);
+    }
+
+    /// <summary>Updates a Protect group.</summary>
+    /// <param name="id">Group id.</param>
+    /// <param name="request">Update payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Updated group.</returns>
+    public Task<ProtectGroup?> UpdateGroupAsync(string id, ProtectGroupUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(request);
+        const string query = """
+            mutation UpdateGroup($id: ID!, $input: GroupUpdateInput!) {
+              updateGroup(id: $id, input: $input) {
+                id name created updated
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectGroup>(
+            query,
+            "updateGroup",
+            new
+            {
+                id,
+                input = new
+                {
+                    name = request.Name,
+                    accessGroup = request.AccessGroup,
+                    roleIds = request.RoleIds,
+                },
+            },
+            cancellationToken);
+    }
+
     /// <summary>Gets the Protect organization.</summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Organization summary, or <see langword="null"/> when absent.</returns>
@@ -767,18 +816,63 @@ public sealed class JamfProtectClient : IDisposable
     }
 
     /// <summary>Gets alert status counts.</summary>
+    /// <param name="filter">Optional alert filters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Status count response.</returns>
-    public Task<ProtectAlertStatusCountResponse?> GetAlertStatusCountsAsync(CancellationToken cancellationToken = default)
+    public Task<ProtectAlertStatusCountResponse?> GetAlertStatusCountsAsync(
+        ProtectAlertFilters? filter = null,
+        CancellationToken cancellationToken = default)
     {
         const string query = """
-            query GetAlertStatusCounts {
-              getAlertStatusCounts {
+            query GetAlertStatusCounts($input: AlertFiltersInput) {
+              getAlertStatusCounts(input: $input) {
                 New InProgress Resolved AutoResolved
               }
             }
             """;
-        return QueryObjectAsync<ProtectAlertStatusCountResponse>(query, "getAlertStatusCounts", new { }, cancellationToken);
+        return QueryObjectAsync<ProtectAlertStatusCountResponse>(
+            query,
+            "getAlertStatusCounts",
+            new { input = ToAlertFilterInput(filter) },
+            cancellationToken);
+    }
+
+    /// <summary>Gets a computer count for optional filters.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Computer count response.</returns>
+    public Task<ProtectComputerCountResponse?> GetComputerCountAsync(CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query GetComputerCount($input: ComputerCountQueryInput) {
+              getComputerCount(input: $input) {
+                computers
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectComputerCountResponse>(
+            query,
+            "getComputerCount",
+            new { input = new { } },
+            cancellationToken);
+    }
+
+    /// <summary>Gets aggregate counts for computers, alerts, and insights.</summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Count response.</returns>
+    public Task<ProtectCountResponse?> GetCountAsync(CancellationToken cancellationToken = default)
+    {
+        const string query = """
+            query GetCount($input: CountQueryInput) {
+              getCount(input: $input) {
+                computers alerts alertsComputers insightsComputers
+              }
+            }
+            """;
+        return QueryObjectAsync<ProtectCountResponse>(
+            query,
+            "getCount",
+            new { input = new { } },
+            cancellationToken);
     }
 
     /// <summary>Creates a Protect plan.</summary>
@@ -922,6 +1016,31 @@ public sealed class JamfProtectClient : IDisposable
         usbControlSet = request.UsbControlSetId,
         threatPreventionStrategy = request.ThreatPreventionStrategy,
     };
+
+    private static object? ToAlertFilterInput(ProtectAlertFilters? filter)
+    {
+        if (filter is null)
+        {
+            return null;
+        }
+
+        object? status = string.IsNullOrWhiteSpace(filter.StatusEquals)
+            ? null
+            : new { equals = filter.StatusEquals };
+        object? severity = string.IsNullOrWhiteSpace(filter.SeverityEquals)
+            ? null
+            : new { equals = filter.SeverityEquals };
+        object? computerUuid = string.IsNullOrWhiteSpace(filter.ComputerUuidEquals)
+            ? null
+            : new { equals = filter.ComputerUuidEquals };
+
+        if (status is null && severity is null && computerUuid is null)
+        {
+            return null;
+        }
+
+        return new { status, severity, computerUuid };
+    }
 
     private async Task<ProtectConnection<T>> QueryConnectionAsync<T>(
         string query,

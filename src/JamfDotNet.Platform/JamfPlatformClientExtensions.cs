@@ -145,4 +145,90 @@ public static class JamfPlatformClientExtensions
             pageSize,
             cancellationToken);
     }
+
+    /// <summary>
+    /// Enumerates devices for a compliance benchmark rule.
+    /// </summary>
+    /// <param name="client">Platform client.</param>
+    /// <param name="benchmarkId">Benchmark id.</param>
+    /// <param name="ruleId">Rule id (required by the Platform compliance API).</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of device rule results.</returns>
+    public static IAsyncEnumerable<Generated.Compliance.Models.DeviceRuleResult> EnumerateBenchmarkDevicesAsync(
+        this JamfPlatformClient client,
+        string benchmarkId,
+        string ruleId,
+        int pageSize = 100,
+        Action<RequestConfiguration<Generated.Compliance.V1.Tenant.Item.Benchmarks.Item.Devices.DevicesRequestBuilder.DevicesRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrWhiteSpace(benchmarkId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleId);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+        var devices = client.ForTenant().Compliance.Benchmarks[benchmarkId].Devices;
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.Compliance.V1.Tenant.Item.Benchmarks.Item.Devices.DevicesRequestBuilder.DevicesRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    config.QueryParameters.RuleId = ruleId;
+                };
+
+                var results = await devices.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<Generated.Compliance.Models.DeviceRuleResult> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<Generated.Compliance.Models.DeviceRuleResult>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates rules (with stats) for a compliance benchmark.
+    /// </summary>
+    /// <param name="client">Platform client.</param>
+    /// <param name="benchmarkId">Benchmark id.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of rule results.</returns>
+    public static IAsyncEnumerable<Generated.Compliance.Models.RuleResult> EnumerateBenchmarkRulesAsync(
+        this JamfPlatformClient client,
+        string benchmarkId,
+        int pageSize = 100,
+        Action<RequestConfiguration<Generated.Compliance.V1.Tenant.Item.Benchmarks.Item.Rules.RulesRequestBuilder.RulesRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentException.ThrowIfNullOrWhiteSpace(benchmarkId);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+        var rules = client.ForTenant().Compliance.Benchmarks[benchmarkId].Rules;
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.Compliance.V1.Tenant.Item.Benchmarks.Item.Rules.RulesRequestBuilder.RulesRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                };
+
+                var results = await rules.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<Generated.Compliance.Models.RuleResult> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<Generated.Compliance.Models.RuleResult>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
 }

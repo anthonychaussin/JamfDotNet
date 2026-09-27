@@ -11,19 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Core:** `JamfRsql` helper for building Jamf Pro RSQL `filter` strings.
 - **Core:** `JamfClientOptions.OAuthScope` for optional OAuth2 role scoping.
-- **Core:** `JamfClientOptions.RemapKiotaExceptions` with `JamfRemappingRequestAdapter` for Pro/Classic.
+- **Core:** `RemapKiotaExceptions` with `JamfRemappingRequestAdapter` for Pro, Classic, Platform, and Title Editor.
 - **Core:** richer `JamfApiException.FromApiException` body extraction + explicit body overload.
 - **Core:** Basic→bearer `InvalidateAsync` now best-effort calls `/api/v1/auth/invalidate-token`.
-- **Pro:** pagination helpers for mobile devices, scripts, packages, users, and categories.
-- **Protect:** typed plans/computers mutations, organization, users/roles CRUD, insights, telemetry v2, audit logs, alert status counts + matching `Enumerate*` helpers.
-- **Platform:** `EnumerateDevicesAsync` / `EnumerateDeviceGroupsAsync` / `EnumerateBlueprintsAsync`; live smoke lists tenant devices.
+- **Pro:** pagination helpers for mobile devices, scripts, packages, users, categories, and patch policies; MDM wrappers (`RestartDevicesAsync`, `LockDevicesAsync`, …).
+- **Protect:** typed plans/computers mutations, organization, users/roles CRUD, insights, telemetry v2, audit logs, group get/update, computer/aggregate counts, alert status counts (optional filters) + matching `Enumerate*` helpers including `EnumerateAuditLogsByDateAsync`.
+- **Platform:** `EnumerateDevicesAsync` / `EnumerateDeviceGroupsAsync` / `EnumerateBlueprintsAsync` / `EnumerateBenchmarkDevicesAsync` / `EnumerateBenchmarkRulesAsync`; live smoke uses `EnumerateDevicesAsync`.
 - **School:** CRUD writes for groups/classes/profiles/apps/locations; additional MDM commands (`shutdown`, `blankpush`, `updateinventory`, lost mode, `SendCommandAsync`).
-- **Tests:** dedicated `JamfDotNet.Core.Tests` project.
+- **Tests:** dedicated `JamfDotNet.Core.Tests` project (incl. remapping adapter); Protect group/count mocks; School shutdown MDM.
 - Optional CI `live-smoke` job (manual / tag) gated on repository secrets.
 
 ### Changed
 
-- Platform / School / Title Editor package READMEs document beta gateway, School pagination limits, and Title Editor bootstrap schema regeneration.
+- Classic / Platform / Pro / School / Title Editor package READMEs document remap, pagination helpers, MDM, and beta gateway notes.
 
 ## [0.1.0] - 2026-09-27
 

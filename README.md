@@ -147,9 +147,9 @@ var list = await titles.Api.Softwaretitles.GetAsync();
 
 ## Pagination, errors, and resilience
 
-- **Pagination:** `JamfPagination` in Core; Protect `Enumerate*Async`; Pro helpers (`EnumerateComputersInventoryAsync`, mobile devices, scripts, packages, users, categories); Platform `EnumerateDevicesAsync` / `EnumerateDeviceGroupsAsync` / `EnumerateBlueprintsAsync`.
+- **Pagination:** `JamfPagination` in Core; Protect `Enumerate*Async`; Pro helpers (`EnumerateComputersInventoryAsync`, mobile devices, scripts, packages, users, categories, patch policies); Platform `EnumerateDevicesAsync` / `EnumerateDeviceGroupsAsync` / `EnumerateBlueprintsAsync` / `EnumerateBenchmarkDevicesAsync` / `EnumerateBenchmarkRulesAsync`.
 - **RSQL filters:** `JamfRsql` in Core (`Eq`, `And`, `In`, …) for Pro `filter` query strings.
-- **Errors:** School / Protect throw `JamfApiException`. Kiota calls can use `.AsJamfApiAsync()` or set `JamfClientOptions.RemapKiotaExceptions = true` for Pro/Classic.
+- **Errors:** School / Protect throw `JamfApiException`. Kiota calls can use `.AsJamfApiAsync()` or set `RemapKiotaExceptions = true` on Pro / Classic / Platform / Title Editor options.
 - **Auth extras:** optional `OAuthScope`; `IJamfTokenProvider.InvalidateAsync` (Basic→bearer also calls invalidate-token).
 - **Resilience:** Named HTTP clients retry **429** / **503** and refresh bearer tokens once after **401** (when a token provider is registered).
 - **Configuration:** every `AddJamf*Client` overload accepts `IConfiguration` / `IConfigurationSection` (see each options `SectionName`).

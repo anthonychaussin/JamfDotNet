@@ -1,7 +1,9 @@
 using JamfDotNet.Core;
 using JamfDotNet.Core.Authentication;
+using JamfDotNet.Core.Kiota;
 using JamfDotNet.TitleEditor.Generated;
 using Microsoft.Extensions.Options;
+using Microsoft.Kiota.Abstractions;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
 
@@ -37,10 +39,11 @@ public sealed class JamfTitleEditorClient : IDisposable
 
         var ownsClient = httpClient is null;
         httpClient ??= new HttpClient();
-        var adapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClient)
+        IRequestAdapter adapter = new HttpClientRequestAdapter(authenticationProvider, httpClient: httpClient)
         {
             BaseUrl = options.ApiBaseUrl.AbsoluteUri.TrimEnd('/'),
         };
+        adapter = JamfRemappingRequestAdapter.MaybeWrap(adapter, options.RemapKiotaExceptions);
 
         return new JamfTitleEditorClient(new JamfTitleEditorApiClient(adapter), ownsClient ? httpClient : null);
     }

@@ -100,6 +100,31 @@ public static class JamfProtectClientPaginationExtensions
         CancellationToken cancellationToken = default) =>
         EnumerateAsync(client, (c, next, ct) => c.ListTelemetriesV2Async(pageSize, next, ct), cancellationToken);
 
+    /// <summary>Enumerates audit logs for a date range across pages.</summary>
+    /// <param name="client">Protect client.</param>
+    /// <param name="startDate">Inclusive start (UTC).</param>
+    /// <param name="endDate">Inclusive end (UTC).</param>
+    /// <param name="pageSize">Optional page size.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of audit log entries.</returns>
+    public static IAsyncEnumerable<ProtectAuditLog> EnumerateAuditLogsByDateAsync(
+        this JamfProtectClient client,
+        DateTimeOffset startDate,
+        DateTimeOffset endDate,
+        int? pageSize = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        return JamfPagination.EnumerateByCursorAsync(
+            async (next, ct) =>
+            {
+                var page = await client.ListAuditLogsByDateAsync(startDate, endDate, pageSize, next, ct).ConfigureAwait(false);
+                IReadOnlyList<ProtectAuditLog> items = page.Items ?? Array.Empty<ProtectAuditLog>();
+                return (items, page.PageInfo?.Next);
+            },
+            cancellationToken);
+    }
+
     private static IAsyncEnumerable<T> EnumerateAsync<T>(
         JamfProtectClient client,
         Func<JamfProtectClient, string?, CancellationToken, Task<ProtectConnection<T>>> listAsync,
