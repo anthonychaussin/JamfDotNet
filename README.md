@@ -157,7 +157,7 @@ var list = await titles.Api.Softwaretitles.GetAsync();
 
 ## Roadmap toward 1.0
 
-See [CHANGELOG.md](CHANGELOG.md) `[Unreleased]`. Stabilization goals before `1.0.0`: keep Pro DX helpers + Protect plan/computer APIs stable, run Platform live smoke in CI when secrets are configured, and avoid claiming AOT until source-gen work lands.
+See [CHANGELOG.md](CHANGELOG.md) for release history (current: `1.2.0`). Native AOT / trimming is still not claimed until JSON source-gen work lands; Platform live smoke remains optional when CI secrets are configured.
 ## OpenAPI & code generation
 
 Clients are generated with [Kiota](https://learn.microsoft.com/openapi/kiota/) where OpenAPI is available.

@@ -64,7 +64,7 @@ Protect is hand-written against `graphql/jamf-protect.schema.graphql`. Add typed
 - One `.nupkg` per product with `lib/net8.0` and `lib/net10.0`.
 - Package README lives under each `src/JamfDotNet.*/README.md`.
 - Native AOT / trimming is **not** claimed yet (reflection-based `System.Text.Json` + Kiota Generated). Document any future source-gen work in PRs.
-- Track user-facing changes in [CHANGELOG.md](CHANGELOG.md); target a `1.0.0` once Unreleased DX + Protect plan/computer surfaces and Platform smoke are stable.
+- Track user-facing changes in [CHANGELOG.md](CHANGELOG.md). Bump `VersionPrefix` in `Directory.Build.props` and publish via a GitHub Release (`vX.Y.Z`) to trigger NuGet Trusted Publishing.
 ## Build & test
 
 ```powershell
