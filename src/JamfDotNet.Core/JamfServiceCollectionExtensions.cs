@@ -88,7 +88,8 @@ public static class JamfServiceCollectionExtensions
         {
             var options = sp.GetService<IOptions<JamfResilienceOptions>>()?.Value
                           ?? new JamfResilienceOptions();
-            return new JamfResilienceHandler(tokenProviderFactory?.Invoke(sp), options);
+            var logger = sp.GetService<Microsoft.Extensions.Logging.ILogger<JamfResilienceHandler>>();
+            return new JamfResilienceHandler(tokenProviderFactory?.Invoke(sp), options, logger);
         });
     }
 

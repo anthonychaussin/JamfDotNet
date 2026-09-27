@@ -446,4 +446,280 @@ public static class JamfProClientExtensions
             pageSize,
             cancellationToken);
     }
+
+    /// <summary>
+    /// Enumerates departments from <c>/api/v1/departments</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="filter">Optional RSQL filter.</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of departments.</returns>
+    public static IAsyncEnumerable<Department> EnumerateDepartmentsAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        string? filter = null,
+        Action<RequestConfiguration<Generated.V1.Departments.DepartmentsRequestBuilder.DepartmentsRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V1.Departments.DepartmentsRequestBuilder.DepartmentsRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        config.QueryParameters.Filter = filter;
+                    }
+                };
+
+                var results = await client.Api.V1.Departments.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<Department> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<Department>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates computer extension attributes from <c>/api/v1/computer-extension-attributes</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="filter">Optional RSQL filter.</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of computer extension attributes.</returns>
+    public static IAsyncEnumerable<ComputerExtensionAttributes> EnumerateComputerExtensionAttributesAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        string? filter = null,
+        Action<RequestConfiguration<Generated.V1.ComputerExtensionAttributes.ComputerExtensionAttributesRequestBuilder.ComputerExtensionAttributesRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V1.ComputerExtensionAttributes.ComputerExtensionAttributesRequestBuilder.ComputerExtensionAttributesRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        config.QueryParameters.Filter = filter;
+                    }
+                };
+
+                var results = await client.Api.V1.ComputerExtensionAttributes.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<ComputerExtensionAttributes> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<ComputerExtensionAttributes>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates mobile device extension attributes from <c>/api/v1/mobile-device-extension-attributes</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="filter">Optional RSQL filter.</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of mobile device extension attributes.</returns>
+    public static IAsyncEnumerable<MobileDeviceExtensionAttributes> EnumerateMobileDeviceExtensionAttributesAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        string? filter = null,
+        Action<RequestConfiguration<Generated.V1.MobileDeviceExtensionAttributes.MobileDeviceExtensionAttributesRequestBuilder.MobileDeviceExtensionAttributesRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V1.MobileDeviceExtensionAttributes.MobileDeviceExtensionAttributesRequestBuilder.MobileDeviceExtensionAttributesRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        config.QueryParameters.Filter = filter;
+                    }
+                };
+
+                var results = await client.Api.V1.MobileDeviceExtensionAttributes.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<MobileDeviceExtensionAttributes> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<MobileDeviceExtensionAttributes>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates computer prestages from <c>/api/v3/computer-prestages</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of computer prestages.</returns>
+    public static IAsyncEnumerable<GetComputerPrestageV3> EnumerateComputerPrestagesAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        Action<RequestConfiguration<Generated.V3.ComputerPrestages.ComputerPrestagesRequestBuilder.ComputerPrestagesRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V3.ComputerPrestages.ComputerPrestagesRequestBuilder.ComputerPrestagesRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                };
+
+                var results = await client.Api.V3.ComputerPrestages.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<GetComputerPrestageV3> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<GetComputerPrestageV3>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates smart computer groups from <c>/api/v3/computer-groups/smart-groups</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="filter">Optional RSQL filter.</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of smart computer group summaries.</returns>
+    public static IAsyncEnumerable<SmartComputerGroupSearch> EnumerateSmartComputerGroupsAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        string? filter = null,
+        Action<RequestConfiguration<Generated.V3.ComputerGroups.SmartGroups.SmartGroupsRequestBuilder.SmartGroupsRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V3.ComputerGroups.SmartGroups.SmartGroupsRequestBuilder.SmartGroupsRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        config.QueryParameters.Filter = filter;
+                    }
+                };
+
+                var results = await client.Api.V3.ComputerGroups.SmartGroups.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<SmartComputerGroupSearch> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<SmartComputerGroupSearch>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates static computer groups from <c>/api/v3/computer-groups/static-groups</c>.
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="pageSize">Page size (default 100).</param>
+    /// <param name="filter">Optional RSQL filter.</param>
+    /// <param name="configure">Optional per-page query configuration.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of static computer group summaries.</returns>
+    public static IAsyncEnumerable<StaticComputerGroupSummary> EnumerateStaticComputerGroupsAsync(
+        this JamfProClient client,
+        int pageSize = 100,
+        string? filter = null,
+        Action<RequestConfiguration<Generated.V3.ComputerGroups.StaticGroups.StaticGroupsRequestBuilder.StaticGroupsRequestBuilderGetQueryParameters>>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pageSize, 0);
+
+        return JamfPagination.EnumerateByPageAsync(
+            async (page, size, ct) =>
+            {
+                Action<RequestConfiguration<Generated.V3.ComputerGroups.StaticGroups.StaticGroupsRequestBuilder.StaticGroupsRequestBuilderGetQueryParameters>> pageConfigure = config =>
+                {
+                    configure?.Invoke(config);
+                    config.QueryParameters.Page = page;
+                    config.QueryParameters.PageSize = size;
+                    if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        config.QueryParameters.Filter = filter;
+                    }
+                };
+
+                var results = await client.Api.V3.ComputerGroups.StaticGroups.GetAsync(pageConfigure, ct).ConfigureAwait(false);
+                IReadOnlyList<StaticComputerGroupSummary> items = results?.Results is { Count: > 0 } list
+                    ? list
+                    : Array.Empty<StaticComputerGroupSummary>();
+                return (items, results?.TotalCount);
+            },
+            pageSize,
+            cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates sites from <c>/api/v1/sites</c> (single-page API response).
+    /// </summary>
+    /// <param name="client">Jamf Pro client.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Async stream of sites.</returns>
+    public static async IAsyncEnumerable<V1Site> EnumerateSitesAsync(
+        this JamfProClient client,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        var sites = await client.Api.V1.Sites.GetAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (sites is null)
+        {
+            yield break;
+        }
+
+        foreach (var site in sites)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return site;
+        }
+    }
 }

@@ -15,7 +15,7 @@ services.AddJamfSchoolClient(o =>
 });
 
 var school = provider.GetRequiredService<JamfSchoolClient>();
-var devices = await school.Devices.ListAsync();
+await foreach (var device in school.EnumerateDevicesAsync()) { /* … */ }
 await school.Devices.RestartAsync(udid);
 await school.Users.CreateAsync(new SchoolUserWriteRequest { Username = "alice" });
 ```
@@ -24,7 +24,7 @@ await school.Users.CreateAsync(new SchoolUserWriteRequest { Username = "alice" }
 
 - Typed reads cover devices, groups, users, classes, profiles, apps, and locations.
 - Writes are available on those resources; use `SendDocumentAsync` for endpoints not yet modeled.
-- School list endpoints generally return a single page (no cursor/page helpers). Prefer server-side filters when the instance supports them, or `GetDocumentAsync` for raw payloads.
+- List endpoints generally return a single page. Convenience `Enumerate*Async` helpers stream that page as `IAsyncEnumerable` (no server-side cursor). Prefer server-side filters when the instance supports them, or `GetDocumentAsync` for raw payloads.
 - Optional OpenAPI fetch: `./scripts/Fetch-JamfSchoolSchema.ps1` (client remains hand-written).
 
 See the [repository README](https://github.com/anthonychaussin/JamfDotNet).
